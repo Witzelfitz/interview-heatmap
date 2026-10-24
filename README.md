@@ -28,6 +28,26 @@ Für die lokale Sprechererkennung:
 
 Das erste Ausführen lädt Whisper- und pyannote-Modellgewichte herunter. Dabei wird **kein Audio hochgeladen**. Danach sind lokale Modellpfade und `--offline` möglich. Die Modellbedingungen und Attribution von pyannote gelten zusätzlich zum Projektcode.
 
+## Interview im Browser hochladen
+
+```bash
+source .venv/bin/activate
+python server.py --port 8767
+```
+
+**[http://localhost:8767/](http://localhost:8767/)** öffnen, Aufnahme auswählen und **Interview hochladen & analysieren** drücken. Die Anwendung verarbeitet die Datei automatisch durch alle sieben Pipeline-Schritte, rendert standardmässig Hook und Social Clips und öffnet anschliessend den fertigen Report. Die Oberfläche zeigt Upload-Fortschritt, aktuellen Verarbeitungsschritt, Fehler und eine Liste bisheriger Interviews. Der frühere Pfad `/report.html` führt zur Upload-Seite; ein vorhandener Testreport ist unter `/demo/report.html` erreichbar.
+
+Die Browser-Oberfläche braucht diesen lokalen Python-Server. Der erzeugte Report bleibt eine eigenständige HTML-Datei ohne Serverbedarf. **«Medium wählen» im fertigen Report** ersetzt weiterhin nur die Wiedergabedatei; eine neue Analyse startest du über **«+ Neues Interview»**.
+
+- Automatische Sprechererkennung ist voreingestellt. Falls `HF_TOKEN` nicht in der Serverumgebung gesetzt ist, den freigeschalteten Hugging-Face-Token im geschützten Feld unter **Analyse-Einstellungen & Zugangsdaten** eingeben. Fehlende Voraussetzungen werden vor dem eigentlichen Upload angezeigt. **«Genau eine Stimme»** ist ausschliesslich für entsprechende Aufnahmen gedacht.
+- Standardmässig bleibt Audio lokal und die Inhaltsanalyse nutzt die gekennzeichnete Heuristik. Für semantische Zusammenfassung, Kapitel, Dramaturgie und redaktionelle Clip-Empfehlungen **Claude** auswählen und den Anthropic-Schlüssel eingeben. Dadurch wird Transkripttext an Anthropic gesendet.
+- Die zusätzliche Checkbox für Remote-Whisper sendet Audio nur bei ausdrücklicher Auswahl an OpenAI. Zugangsdaten werden ausschliesslich im Arbeitsspeicher verarbeitet und aus gespeicherten Prozesslogs entfernt; sie stehen weder in Auftrags-JSON noch URLs oder Browser-Speicher.
+- Uploads werden in Blöcken geschrieben, maximal 20 GiB pro Datei. Pro Aufnahme gibt es `output/uploads/<Auftrags-ID>/input/`, `output/`, `job.json` und `pipeline.log`. Originale werden nicht in öffentliche Repositories übertragen. Mehrere Aufträge werden nacheinander verarbeitet.
+- Ein offener Browser-Tab ist nach dem Upload nicht erforderlich. Der lokale Server muss weiterlaufen. Nach einem Serverneustart erscheinen unterbrochene Aufträge als Fehler und können ohne erneuten Upload gestartet werden; passende Pipeline-Caches werden weiterverwendet. Unvollständige Uploads müssen erneut hochgeladen werden.
+- Der Server bindet ausschliesslich an `127.0.0.1`. Fremde Origins und Hosts können keine Analyse starten. Eingaben, Logs und Caches werden nicht über die Report-URLs ausgeliefert. Audio-/Videodateien unterstützen Byte-Range-Anfragen für präzises Springen im Player.
+
+Alternativ: `interview-heatmap-server --port 8767`. Ausgabeordner und Config sind mit `--data` bzw. `--config` wählbar. Es wird kein zusätzlicher Web-Framework-Stack benötigt.
+
 ## Ein Befehl
 
 ```bash
@@ -166,6 +186,9 @@ python heatmap.py .local-tests/interview.wav --out test-output --model tiny \
   --diarization-file .local-tests/turns.json
 python -m playwright install chromium
 python scripts/verify_report.py test-output/report.html
+
+# Echter Browser-Uploadtest; ausschliesslich eine Ein-Stimmen-Testaufnahme verwenden
+python scripts/verify_upload.py monolog.wav
 ```
 
 Die Testaufnahme ist eine selbst erzeugte fiktive Geschichte. Importierte Sprecherbereiche stammen aus den echten Grenzen der synthetisierten Sprachdateien. Wortzeiten und Text werden tatsächlich mit Whisper berechnet, nicht als Demo erfunden.
@@ -176,6 +199,7 @@ Auf dem Entwicklungsrechner geprüft:
 - Dieselbe Aufnahme zusätzlich mit `medium`/CPU/int8: erfolgreiche vollständige Pipeline mit dem CPU-Standardmodell. Ein weiterer echter `tiny`-Lauf bestand mit auf Python-Ebene blockierten TCP-Verbindungen.
 - 60 Minuten wiederholte synthetische Sprache, `tiny`/CPU/int8, `--offline`: vollständige Pipeline, 7'655 Wörter, 755 Segmente, 64 Peaks, acht Social Clips. Dauer ca. 112 Sekunden, maximaler Resident-Speicher ca. 5.1 GB. Dies ist kein Benchmark für natürliche Interviews oder `medium`/`large-v3`.
 - Browser unter `file://`: korrekter Clip-Start und -Stopp, Suche, gespeicherte Sprechernamen, Downloads, Dark Mode und 768px Breite; keine HTTP-Aufrufe.
+- Browser-Upload mit echter Ein-Stimmen-Aufnahme: alle sieben CLI-Schritte, gerenderte Clips, automatische Weiterleitung, korrekte Wiedergabe und Exporte; beschädigte Aufnahme mit Fehleranzeige. Kein externer HTTP-Aufruf des Browsers. Automatische Server-Tests prüfen zusätzlich Upload-Isolation, Limits, Origin/CSRF/Host-Schutz, Byte-Ranges, Neustart/Wiederaufnahme und das Entfernen von Schlüsseln aus Logs.
 - Automatische Tests für echte Zitatprüfung, Cache-Invalidierung, individuelle Sprecher-Normalisierung, Zeitbudgets, Schnittgrenzen, EDL-Timecodes, HTML-Injection, LLM-Verträge und Remote-Chunk-Offsets.
 
 **Noch extern zu prüfen:** automatische pyannote-Diarisierung mit freigeschaltetem Modell, echte Claude-/OpenAI-API-Aufrufe, NLE-Import und natürliche lange Schweizerdeutsch-Interviews. Hier wurden keine API-Schlüssel bereitgestellt. API-Tests verwenden Stubs und lösen keine kostenpflichtigen Aufrufe aus.
@@ -188,10 +212,11 @@ Lokale Verarbeitung unterstützt einen datensparsamen Workflow, ist aber keine p
 
 ```text
 heatmap.py
+server.py  # lokale Upload-App
 pipeline/{audio,transcribe,analyze,scoring,cuts,report,common}.py
-templates/report.html
+templates/{upload,report}.html
 config.yaml
-scripts/{make_test_audio,verify_report}.py
+scripts/{make_test_audio,verify_report,verify_upload}.py
 tests/
 ```
 

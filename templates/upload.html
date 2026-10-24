@@ -1,0 +1,1076 @@
+<!DOCTYPE html>
+<html data-theme="light" lang="de-CH">
+ <head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width,initial-scale=1" name="viewport"/>
+  <meta content="light dark" name="color-scheme"/>
+  <title>
+   Interview hochladen · Schnittplatz
+  </title>
+  <style>
+   :root {
+  --bg: #f4f3ef;
+  --panel: #fff;
+  --ink: #202c2b;
+  --muted: #6e7976;
+  --border: #e2e5de;
+  --accent: #355b50;
+  --soft: #eaf0e8;
+  --hot: #db6a43;
+  --error: #a83d30
+}
+
+[data-theme=dark] {
+  --bg: #151e1d;
+  --panel: #1d2927;
+  --ink: #e5ede8;
+  --muted: #a1b2ab;
+  --border: #34443f;
+  --accent: #a5c9b4;
+  --soft: #2e4038;
+  --hot: #f49d74;
+  --error: #ffab9f
+}
+
+* {
+  box-sizing: border-box
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font: 14px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif
+}
+
+main {
+  max-width: 1180px;
+  margin: auto;
+  padding: 0 32px 45px
+}
+
+.top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 22px 0;
+  border-bottom: 1px solid var(--border)
+}
+
+.brand {
+  font-size: 18px;
+  font-weight: 750;
+  letter-spacing: -.4px;
+  display: flex;
+  align-items: center;
+  gap: 10px
+}
+
+.logo {
+  background: var(--accent);
+  color: var(--bg);
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
+  display: grid;
+  place-items: center;
+  font-size: 22px
+}
+
+.badge {
+  font-size: 11px;
+  color: var(--accent);
+  background: var(--soft);
+  padding: 5px 10px;
+  border-radius: 5px
+}
+
+.eyebrow {
+  font-size: 10px;
+  letter-spacing: 1.7px;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase
+}
+
+h1 {
+  font-size: 40px;
+  line-height: 1.15;
+  letter-spacing: -1.5px;
+  margin: 12px 0
+}
+
+h1 span {
+  color: var(--muted)
+}
+
+.intro {
+  margin: 30px 0 25px
+}
+
+.intro p {
+  max-width: 710px;
+  color: var(--muted);
+  margin: 14px 0
+}
+
+h2 {
+  font-size: 16px;
+  letter-spacing: -.3px;
+  margin: 0
+}
+
+h3 {
+  font-size: 14px;
+  margin: 0
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 20px;
+  align-items: start
+}
+
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  overflow: hidden
+}
+
+.panel-head {
+  border-bottom: 1px solid var(--border);
+  padding: 19px 22px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px
+}
+
+.body {
+  padding: 22px
+}
+
+.drop {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  border: 1.5px dashed var(--border);
+  border-radius: 10px;
+  padding: 29px 16px;
+  cursor: pointer;
+  background: var(--bg);
+  gap: 7px
+}
+
+.drop:hover,
+.drop.drag {
+  border-color: var(--accent);
+  background: var(--soft)
+}
+
+.drop .icon {
+  font-size: 26px;
+  color: var(--accent)
+}
+
+.drop strong {
+  font-size: 15px;
+  overflow-wrap: anywhere;
+  max-width: 100%
+}
+
+.drop small,
+.hint {
+  font-size: 11px;
+  color: var(--muted)
+}
+
+.drop input {
+  max-width: 100%;
+  font-size: 11px;
+  padding-top: 8px
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-top: 18px
+}
+
+label.field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 600
+}
+
+button,
+input,
+select {
+  font: inherit
+}
+
+input,
+select {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 9px;
+  background: var(--bg);
+  color: var(--ink);
+  min-width: 0
+}
+
+button,
+a {
+  outline-offset: 4px
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible {
+  outline: 2px solid var(--hot);
+  outline-offset: 3px
+}
+
+button {
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  padding: 9px 13px;
+  background: var(--panel);
+  color: var(--ink);
+  cursor: pointer
+}
+
+button:disabled {
+  opacity: .5;
+  cursor: wait
+}
+
+.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--bg);
+  font-weight: 650
+}
+
+.full {
+  width: 100%;
+  margin-top: 19px;
+  padding: 12px
+}
+
+.check {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  font-size: 12px;
+  margin: 14px 0
+}
+
+.check input {
+  accent-color: var(--accent);
+  margin-top: 5px
+}
+
+.check span small {
+  display: block;
+  color: var(--muted);
+  font-size: 10px
+}
+
+.hint {
+  margin: 10px 0;
+  line-height: 1.6
+}
+
+.hint a {
+  color: var(--accent)
+}
+
+.warn {
+  border-left: 2px solid var(--hot);
+  padding: 9px 12px;
+  background: var(--bg);
+  border-radius: 0 5px 5px 0;
+  margin: 15px 0;
+  font-size: 11px;
+  color: var(--muted)
+}
+
+details {
+  border-top: 1px solid var(--border);
+  margin-top: 18px;
+  padding-top: 14px
+}
+
+summary {
+  font-size: 12px;
+  font-weight: 650;
+  cursor: pointer
+}
+
+details .field {
+  margin-top: 12px
+}
+
+.error {
+  border: 1px solid var(--error);
+  color: var(--error);
+  border-radius: 6px;
+  padding: 10px 12px;
+  margin-top: 16px;
+  font-size: 12px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere
+}
+
+.hidden {
+  display: none !important
+}
+
+.stage-list {
+  list-style: none;
+  margin: 0;
+  padding: 0
+}
+
+.stage {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  padding: 13px 0;
+  border-bottom: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 12px
+}
+
+.stage:last-child {
+  border: 0
+}
+
+.stage .n {
+  display: grid;
+  place-items: center;
+  width: 25px;
+  height: 25px;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  font-size: 10px;
+  flex-shrink: 0
+}
+
+.stage.active {
+  color: var(--ink);
+  font-weight: 650
+}
+
+.stage.active .n {
+  background: var(--accent);
+  color: var(--bg);
+  border-color: var(--accent)
+}
+
+.stage.done .n {
+  background: var(--soft);
+  color: var(--accent);
+  border-color: var(--soft)
+}
+
+.progress {
+  height: 5px;
+  background: var(--bg);
+  border-radius: 5px;
+  overflow: hidden;
+  margin: 14px 0
+}
+
+.progress div {
+  height: 100%;
+  background: var(--hot);
+  width: 0;
+  transition: width .3s
+}
+
+#job-detail {
+  font-size: 12px;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+  min-height: 38px
+}
+
+.ready {
+  padding: 15px;
+  background: var(--soft);
+  border-radius: 8px;
+  margin-top: 15px
+}
+
+.ready a {
+  display: inline-block;
+  text-decoration: none;
+  color: var(--bg);
+  background: var(--accent);
+  padding: 9px 13px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 650
+}
+
+.ready a.secondary {
+  color: var(--accent);
+  background: transparent;
+  margin-left: 5px
+}
+
+.history {
+  margin-top: 22px
+}
+
+.job-row {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 15px 22px;
+  border-bottom: 1px solid var(--border)
+}
+
+.job-row:last-child {
+  border: 0
+}
+
+.job-row .name {
+  font-size: 12px;
+  font-weight: 600;
+  overflow-wrap: anywhere
+}
+
+.job-row .meta {
+  font-size: 10px;
+  color: var(--muted)
+}
+
+.job-row a {
+  font-size: 11px;
+  color: var(--accent);
+  white-space: nowrap
+}
+
+.job-row button {
+  font-size: 10px
+}
+
+.empty {
+  padding: 22px;
+  color: var(--muted);
+  font-size: 12px
+}
+
+.footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  font-size: 10px;
+  color: var(--muted);
+  margin-top: 24px
+}
+
+.footer a {
+  color: var(--muted)
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px
+}
+
+.toolbar button {
+  padding: 5px 10px
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0
+}
+
+@media(max-width:800px) {
+  main {
+    padding: 0 18px 28px
+  }
+
+  .grid {
+    grid-template-columns: 1fr
+  }
+
+  h1 {
+    font-size: 32px
+  }
+
+  .body {
+    padding: 18px
+  }
+
+  .form-row {
+    gap: 10px
+  }
+
+  .footer {
+    flex-direction: column;
+    gap: 4px
+  }
+}
+
+@media(prefers-reduced-motion:reduce) {
+  * {
+    transition: none !important
+  }
+}
+  </style>
+ </head>
+ <body>
+  <main>
+   <header class="top">
+    <div class="brand">
+     <span aria-hidden="true" class="logo">
+      ≋
+     </span>
+     Schnittplatz
+    </div>
+    <div class="toolbar">
+     <span class="badge">
+      Auf deinem Gerät
+     </span>
+     <button aria-label="Farbschema wechseln" id="theme">
+      ◐
+     </button>
+    </div>
+   </header>
+   <section class="intro">
+    <span class="eyebrow">
+     Interview Heatmap &amp; Schnitt-Advisor
+    </span>
+    <h1>
+     Dein Interview rein.
+     <br/>
+     <span>
+      Die starken Momente raus.
+     </span>
+    </h1>
+    <p>
+     Lade eine Audio- oder Videodatei hoch. Schnittplatz erstellt automatisch Transkript, Heatmap, Dramaturgie und Schnittvorschläge – mit einem fertigen Report und allen Exporten.
+    </p>
+   </section>
+   <div class="grid">
+    <section class="panel">
+     <div class="panel-head">
+      <h2>
+       Neues Interview
+      </h2>
+      <span class="eyebrow">
+       01 · Aufnahme wählen
+      </span>
+     </div>
+     <form class="body" id="upload-form">
+      <label class="drop" id="drop">
+       <span aria-hidden="true" class="icon">
+        ↥
+       </span>
+       <strong id="file-label">
+        Datei hierher ziehen oder auswählen
+       </strong>
+       <small id="file-size">
+        MP4, MOV, MKV, MP3, WAV, M4A, FLAC … · bis 20 GiB
+       </small>
+       <input accept="audio/*,video/*,.mkv,.m4a,.flac,.aif,.aiff" aria-label="Interview-Datei auswählen" id="file" type="file"/>
+      </label>
+      <div class="form-row">
+       <label class="field">
+        Sprache
+        <select id="lang">
+         <option value="de">
+          Deutsch / Schweizerdeutsch
+         </option>
+         <option value="en">
+          Englisch
+         </option>
+         <option value="fr">
+          Französisch
+         </option>
+         <option value="it">
+          Italienisch
+         </option>
+        </select>
+       </label>
+       <label class="field">
+        Sprecher
+        <select id="speaker-mode">
+         <option value="auto">
+          Automatisch erkennen
+         </option>
+         <option value="single">
+          Genau eine Stimme
+         </option>
+        </select>
+       </label>
+      </div>
+      <div class="warn hidden" id="setup-note">
+      </div>
+      <details id="settings">
+       <summary>
+        Analyse-Einstellungen &amp; Zugangsdaten
+       </summary>
+       <div class="form-row">
+        <label class="field">
+         Whisper-Modell
+         <select id="model">
+          <option value="auto">
+           Automatisch (empfohlen)
+          </option>
+          <option value="large-v3">
+           large-v3 · höchste Qualität
+          </option>
+          <option value="medium">
+           medium
+          </option>
+          <option value="small">
+           small · schneller
+          </option>
+          <option value="tiny">
+           tiny · nur zum Testen
+          </option>
+         </select>
+        </label>
+        <label class="field">
+         Inhaltsanalyse
+         <select id="llm">
+          <option value="local">
+           Lokal · Heuristik
+          </option>
+          <option value="claude">
+           Claude · inhaltliche Analyse
+          </option>
+         </select>
+        </label>
+       </div>
+       <p class="hint">
+        Lokal: Audio-Merkmale und Schlüsselwort-Heuristik. Claude: inhaltliche Zusammenfassung, Kapitel, Dramaturgie und redaktionelle Schnittvorschläge; dabei wird Transkripttext an Anthropic gesendet.
+       </p>
+       <label class="field" id="hf-field">
+        Hugging-Face-Token für lokale Sprechererkennung
+        <input autocomplete="off" id="hf-token" placeholder="hf_…" spellcheck="false" type="password"/>
+       </label>
+       <p class="hint" id="hf-help">
+        Einmal die
+        <a href="https://huggingface.co/pyannote/speaker-diarization-community-1" rel="noreferrer" target="_blank">
+         community-1-Modellbedingungen
+        </a>
+        selbst akzeptieren und einen Token mit Leserechten verwenden. Die Erkennung läuft lokal; beim ersten Mal werden Modellgewichte heruntergeladen.
+       </p>
+       <label class="field hidden" id="anthropic-field">
+        Anthropic-API-Schlüssel
+        <input autocomplete="off" id="anthropic-key" placeholder="sk-ant-…" spellcheck="false" type="password"/>
+       </label>
+       <label class="check">
+        <input id="remote" type="checkbox"/>
+        <span>
+         Audio über die OpenAI-Whisper-API transkribieren
+         <small>
+          Optional: sendet die Aufnahme an OpenAI. Standardmässig bleibt Audio lokal.
+         </small>
+        </span>
+       </label>
+       <label class="field hidden" id="openai-field">
+        OpenAI-API-Schlüssel
+        <input autocomplete="off" id="openai-key" placeholder="sk-…" spellcheck="false" type="password"/>
+       </label>
+       <label class="check">
+        <input checked="" id="render" type="checkbox"/>
+        <span>
+         Hook und Social Clips direkt rendern
+         <small>
+          Erstellt abspielbare Dateien und Untertitel zusätzlich zu JSON, SRT und EDL.
+         </small>
+        </span>
+       </label>
+       <p class="hint">
+        Schlüssel bleiben nur im Arbeitsspeicher und werden weder im Browser gespeichert noch in die Auftragsdaten geschrieben.
+       </p>
+      </details>
+      <div class="error hidden" id="form-error" role="alert">
+      </div>
+      <button class="primary full" id="start" type="submit">
+       Interview hochladen &amp; analysieren
+      </button>
+      <p class="hint">
+       Der Upload geht nur an diesen lokalen Server. Lass ihn während der Analyse laufen; den Browser-Tab kannst du schliessen und später wieder öffnen. Schweizerdeutsch wird näherungsweise ins Hochdeutsche übertragen.
+      </p>
+     </form>
+    </section>
+    <section aria-live="polite" class="panel">
+     <div class="panel-head">
+      <h2>
+       Vom Gespräch zum Schnitt
+      </h2>
+      <span class="badge" id="job-state">
+       Bereit
+      </span>
+     </div>
+     <div class="body">
+      <div id="job-detail">
+       Nach dem Upload startet die vollständige Pipeline automatisch. Mehrere Interviews werden nacheinander verarbeitet.
+      </div>
+      <div aria-label="Analysefortschritt" aria-valuemax="100" aria-valuemin="0" aria-valuenow="0" class="progress" id="progress" role="progressbar">
+       <div id="progress-bar">
+       </div>
+      </div>
+      <ol class="stage-list" id="stages">
+      </ol>
+      <div class="error hidden" id="job-error">
+      </div>
+      <button class="hidden" id="retry" style="margin-top:12px">
+       Analyse erneut starten
+      </button>
+      <div class="ready hidden" id="ready">
+       <strong>
+        Deine Analyse ist fertig.
+       </strong>
+       <p class="hint">
+        Heatmap, Transkript und Schnittvorschläge sind jetzt bereit. Der Report öffnet sich automatisch.
+       </p>
+       <a href="#" id="report-link">
+        Report öffnen →
+       </a>
+       <a class="secondary" download="report.json" href="#" id="data-link">
+        ↓ Rohdaten JSON
+       </a>
+      </div>
+     </div>
+    </section>
+   </div>
+   <section class="panel history">
+    <div class="panel-head">
+     <h2>
+      Deine Interviews
+     </h2>
+     <a class="hidden" id="demo-link" style="font-size:11px;color:var(--accent)">
+      Testreport ansehen →
+     </a>
+    </div>
+    <div id="history">
+     <p class="empty">
+      Noch keine Interviews hochgeladen.
+     </p>
+    </div>
+   </section>
+   <footer class="footer">
+    <span>
+     SCHNITTPLATZ · Lokaler Upload · Vollständige Pipeline
+    </span>
+    <span>
+     Dateien bleiben im lokalen Ausgabeordner. Keine externen Ressourcen für diese Oberfläche.
+    </span>
+   </footer>
+  </main>
+  <script>
+   'use strict';
+const $ = id => document.getElementById(id),
+  el = (tag, cls, text) => {
+    const e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (text !== undefined) e.textContent = text;
+    return e
+  };
+let capabilities = null,
+  selectedFile = null,
+  activeJob = null,
+  uploading = false,
+  timer = null,
+  autoOpen = false;
+const stateLabels = {
+  uploading: 'Upload',
+  queued: 'Wartet',
+  running: 'Analysiert',
+  done: 'Fertig',
+  failed: 'Fehler'
+};
+const fallbackStages = ['Audio vorbereiten', 'Transkription & Sprecher', 'Audio-Merkmale', 'Inhalt & Dramaturgie', 'Heat-Kurve & Peaks', 'Schnittvorschläge & Export', 'Report erstellen'];
+try {
+  document.documentElement.dataset.theme = localStorage.getItem('heatmap:theme') || 'light';
+  activeJob = localStorage.getItem('heatmap:active-job')
+} catch {}
+$('theme').onclick = () => {
+  const t = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+  document.documentElement.dataset.theme = t;
+  try {
+    localStorage.setItem('heatmap:theme', t)
+  } catch {}
+};
+async function api(url, options = {}) {
+  const r = await fetch(url, {
+    cache: 'no-store',
+    ...options
+  });
+  const data = await r.json();
+  if (!r.ok) throw Error(data.error || 'Die Anfrage ist fehlgeschlagen.');
+  return data
+}
+
+function error(text) {
+  $('form-error').textContent = text;
+  $('form-error').classList.toggle('hidden', !text)
+}
+
+function choose(file) {
+  if (!file) return;
+  selectedFile = file;
+  $('file-label').textContent = file.name;
+  $('file-size').textContent = (file.size / 1024 / 1024).toFixed(1) + ' MB · Bereit für die Analyse';
+  error('')
+}
+$('file').onchange = e => choose(e.target.files[0]);
+for (const event of ['dragenter', 'dragover']) $('drop').addEventListener(event, e => {
+  e.preventDefault();
+  $('drop').classList.add('drag')
+});
+for (const event of ['dragleave', 'drop']) $('drop').addEventListener(event, e => {
+  e.preventDefault();
+  $('drop').classList.remove('drag');
+  if (event === 'drop') choose(e.dataTransfer.files[0])
+});
+
+function settings() {
+  const automatic = $('speaker-mode').value === 'auto';
+  $('hf-field').classList.toggle('hidden', !automatic);
+  $('hf-help').classList.toggle('hidden', !automatic);
+  $('anthropic-field').classList.toggle('hidden', $('llm').value !== 'claude');
+  $('openai-field').classList.toggle('hidden', !$('remote').checked);
+  if (!capabilities) return;
+  const missing = automatic && !capabilities.hf_token && !capabilities.local_diarization_model && !$('hf-token').value.trim();
+  $('setup-note').classList.toggle('hidden', !missing);
+  $('setup-note').textContent = 'Für automatische Sprechererkennung fehlt noch ein freigeschalteter Hugging-Face-Token. Gib ihn unter «Analyse-Einstellungen & Zugangsdaten» ein. «Genau eine Stimme» nur für Aufnahmen mit tatsächlich einer Stimme verwenden.';
+  if (missing) $('settings').open = true
+}
+for (const id of ['speaker-mode', 'llm', 'remote', 'hf-token']) $(id).addEventListener('input', () => {
+  error('');
+  settings()
+});
+
+function options() {
+  return new URLSearchParams({
+    lang: $('lang').value,
+    model: $('model').value,
+    speaker_mode: $('speaker-mode').value,
+    llm: $('llm').value,
+    remote: String($('remote').checked),
+    render: String($('render').checked)
+  })
+}
+
+function headers() {
+  return {
+    'X-CSRF-Token': capabilities.csrf,
+    'X-HF-Token': $('hf-token').value.trim(),
+    'X-Anthropic-Key': $('anthropic-key').value.trim(),
+    'X-OpenAI-Key': $('openai-key').value.trim()
+  }
+}
+
+function validate() {
+  if (!capabilities) throw Error('Der lokale Server ist noch nicht erreichbar. Bitte neu laden.');
+  if (!capabilities.ffmpeg) throw Error('ffmpeg/ffprobe fehlt auf diesem Gerät.');
+  if ($('speaker-mode').value === 'auto') {
+    if (!capabilities.diarization) throw Error('Die lokale Sprechererkennung ist noch nicht installiert. Siehe README: pip install -e ".[diarization]".');
+    if (!capabilities.hf_token && !capabilities.local_diarization_model && !$('hf-token').value.trim()) throw Error('Bitte zuerst einen freigeschalteten Hugging-Face-Token eingeben.')
+  }
+  if ($('llm').value === 'claude' && (!capabilities.claude || !capabilities.anthropic_key && !$('anthropic-key').value.trim())) throw Error('Claude benötigt das installierte Claude-Paket und einen Anthropic-API-Schlüssel.');
+  if ($('remote').checked && (!capabilities.remote || !capabilities.openai_key && !$('openai-key').value.trim())) throw Error('Remote-Whisper benötigt das OpenAI-Paket und einen API-Schlüssel.')
+}
+
+function progress(value) {
+  $('progress-bar').style.width = value + '%';
+  $('progress').setAttribute('aria-valuenow', Math.round(value))
+}
+
+function stages(job = {
+  stage: 0,
+  state: 'idle'
+}) {
+  $('stages').replaceChildren();
+  for (const [i, name] of(capabilities?.stages || fallbackStages).entries()) {
+    const done = job.state === 'done' || i + 1 < job.stage;
+    const li = el('li', 'stage' + (done ? ' done' : i + 1 === job.stage ? ' active' : ''));
+    li.append(el('span', 'n', done ? '✓' : String(i + 1)), el('span', '', name));
+    $('stages').append(li)
+  }
+}
+
+function showJob(job) {
+  activeJob = job.id;
+  try {
+    localStorage.setItem('heatmap:active-job', activeJob)
+  } catch {}
+  $('job-state').textContent = stateLabels[job.state] || job.state;
+  $('job-detail').textContent = job.filename + ' · ' + job.detail;
+  progress(job.state === 'done' ? 100 : job.stage / 7 * 95);
+  stages(job);
+  $('job-error').textContent = job.error || '';
+  $('job-error').classList.toggle('hidden', !job.error);
+  $('retry').classList.toggle('hidden', job.state !== 'failed' || job.upload_complete === false);
+  $('ready').classList.toggle('hidden', job.state !== 'done');
+  if (job.report_url) {
+    $('report-link').href = job.report_url;
+    $('data-link').href = job.data_url
+  }
+  if (job.state === 'done' && autoOpen) {
+    autoOpen = false;
+    window.location.assign(job.report_url)
+  }
+  if (job.state === 'failed') autoOpen = false;
+  return job.state === 'queued' || job.state === 'running' || job.state === 'uploading'
+}
+async function refresh() {
+  clearTimeout(timer);
+  let running = false;
+  try {
+    const data = await api('/api/jobs');
+    const root = $('history');
+    root.replaceChildren();
+    for (const job of data.jobs) {
+      const row = el('div', 'job-row'),
+        left = el('div');
+      left.append(el('div', 'name', job.filename), el('div', 'meta', stateLabels[job.state] + ' · ' + new Date(job.created_at * 1000).toLocaleString('de-CH')));
+      row.append(left);
+      if (job.state === 'done') {
+        const link = el('a', '', 'Report öffnen →');
+        link.href = job.report_url;
+        row.append(link)
+      } else {
+        const b = el('button', '', 'Fortschritt ansehen');
+        b.onclick = () => {
+          showJob(job);
+          $('job-detail').scrollIntoView({
+            block: 'center',
+            behavior: 'smooth'
+          });
+          refresh()
+        };
+        row.append(b)
+      }
+      root.append(row);
+      if (job.id === activeJob && !uploading) running = showJob(job) || running;
+      if (['running', 'queued', 'uploading'].includes(job.state)) running = true
+    }
+    if (!data.jobs.length) root.append(el('p', 'empty', 'Noch keine Interviews hochgeladen.'));
+  } catch (e) {
+    $('job-detail').textContent = 'Verbindung zum lokalen Server unterbrochen. Die Analyse läuft serverseitig weiter, solange der Server aktiv ist.';
+    running = true
+  }
+  timer = setTimeout(refresh, running ? 1200 : 8000)
+}
+$('upload-form').onsubmit = e => {
+  e.preventDefault();
+  try {
+    validate();
+    if (!selectedFile) throw Error('Bitte eine Interview-Datei auswählen.');
+    if (selectedFile.size > capabilities.max_upload_bytes || selectedFile.size === 0) throw Error('Die Datei ist leer oder grösser als 20 GiB.')
+  } catch (e) {
+    error(e.message);
+    return
+  }
+  error('');
+  uploading = true;
+  autoOpen = true;
+  $('start').disabled = true;
+  $('job-error').classList.add('hidden');
+  $('ready').classList.add('hidden');
+  $('retry').classList.add('hidden');
+  $('job-state').textContent = 'Upload';
+  stages();
+  const query = options();
+  query.set('filename', selectedFile.name);
+  const request = new XMLHttpRequest();
+  request.open('POST', '/api/jobs?' + query);
+  for (const [k, v] of Object.entries(headers()))
+    if (v) request.setRequestHeader(k, v);
+  request.setRequestHeader('Content-Type', 'application/octet-stream');
+  request.upload.onprogress = e => {
+    if (e.lengthComputable) {
+      const percent = e.loaded / e.total * 100;
+      progress(percent);
+      $('job-detail').textContent = 'Lokaler Upload · ' + Math.round(percent) + ' % · ' + selectedFile.name
+    }
+  };
+  request.onload = () => {
+    uploading = false;
+    $('start').disabled = false;
+    try {
+      const job = JSON.parse(request.responseText);
+      if (request.status !== 202) throw Error(job.error || 'Upload fehlgeschlagen.');
+      showJob(job);
+      refresh()
+    } catch (e) {
+      autoOpen = false;
+      error(e.message);
+      $('job-state').textContent = 'Nicht gestartet'
+    }
+  };
+  request.onerror = () => {
+    uploading = false;
+    autoOpen = false;
+    $('start').disabled = false;
+    error('Der lokale Upload wurde unterbrochen. Bitte Serververbindung prüfen und erneut starten.');
+    $('job-state').textContent = 'Upload unterbrochen'
+  };
+  request.send(selectedFile)
+};
+$('retry').onclick = async () => {
+  try {
+    validate();
+    error('');
+    $('retry').disabled = true;
+    autoOpen = true;
+    const job = await api('/api/jobs/' + activeJob + '/retry?' + options(), {
+      method: 'POST',
+      headers: headers()
+    });
+    showJob(job);
+    refresh()
+  } catch (e) {
+    autoOpen = false;
+    error(e.message)
+  } finally {
+    $('retry').disabled = false
+  }
+};
+(async () => {
+  try {
+    capabilities = await api('/api/status');
+    settings();
+    stages();
+    if (capabilities.demo_url) {
+      $('demo-link').href = capabilities.demo_url;
+      $('demo-link').classList.remove('hidden')
+    }
+    await refresh()
+  } catch (e) {
+    error('Der lokale Analyseserver ist nicht erreichbar. Bitte server.py starten und diese Seite neu laden.')
+  }
+})();
+  </script>
+ </body>
+</html>

@@ -15,6 +15,7 @@ dependencies = [
 
 [project.scripts]
 interview-heatmap = "heatmap:main"
+interview-heatmap-server = "server:main"
 
 [project.optional-dependencies]
 diarization = ["pyannote.audio>=4,<5"]
@@ -23,12 +24,12 @@ claude = ["anthropic>=0.84,<2"]
 dev = ["pytest>=8,<10", "ruff>=0.9", "playwright>=1.50"]
 
 [tool.setuptools]
-py-modules = ["heatmap"]
+py-modules = ["heatmap", "server"]
 packages = ["pipeline"]
 
 [tool.setuptools.data-files]
 "share/interview-heatmap" = ["config.yaml"]
-"share/interview-heatmap/templates" = ["templates/report.html"]
+"share/interview-heatmap/templates" = ["templates/report.html", "templates/upload.html"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

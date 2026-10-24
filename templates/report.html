@@ -1222,6 +1222,12 @@ const fmt = t => {
   t = Math.floor(Math.max(0, t));
   return (t >= 3600 ? String(Math.floor(t / 3600)).padStart(2, '0') + ':' : '') + String(Math.floor(t / 60) % 60).padStart(2, '0') + ':' + String(t % 60).padStart(2, '0')
 };
+if (['http:', 'https:'].includes(location.protocol) && /^\/(jobs|demo)\//.test(location.pathname)) {
+  const upload = el('a', '', '+ Neues Interview');
+  upload.href = '/';
+  upload.style.cssText = 'border:1px solid var(--border);border-radius:7px;padding:8px 12px;color:var(--ink);text-decoration:none';
+  document.querySelector('.actions').prepend(upload);
+}
 const speakers = [...new Set(S.map(s => s.speaker))],
   key = 'heatmap:' + M.sha256;
 let names = {},

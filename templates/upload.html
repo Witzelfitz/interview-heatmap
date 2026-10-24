@@ -658,6 +658,9 @@ details .field {
         <label class="field">
          Inhaltsanalyse
          <select id="llm">
+          <option value="ollama">
+           Ollama · vollständig lokal
+          </option>
           <option value="local">
            Lokal · Heuristik
           </option>
@@ -667,8 +670,13 @@ details .field {
          </select>
         </label>
        </div>
-       <p class="hint">
-        Lokal: Audio-Merkmale und Schlüsselwort-Heuristik. Claude: inhaltliche Zusammenfassung, Kapitel, Dramaturgie und redaktionelle Schnittvorschläge; dabei wird Transkripttext an Anthropic gesendet.
+       <label class="field" id="ollama-field">
+        Lokales Ollama-Modell
+        <select id="ollama-model">
+        </select>
+       </label>
+       <p class="hint" id="llm-help">
+        Ollama erstellt Zusammenfassung, Kapitel, Dramaturgie und Schnittvorschläge direkt auf deinem Laptop. Keine API-Schlüssel und keine Übermittlung von Audio oder Transkript an Dritte. Die Heuristik ist ein einfacherer Modus ohne LLM; Claude ist optional und sendet Text an Anthropic.
        </p>
        <label class="field" id="hf-field">
         Hugging-Face-Token für lokale Sprechererkennung
@@ -857,6 +865,7 @@ function settings() {
   const automatic = $('speaker-mode').value === 'auto';
   $('hf-field').classList.toggle('hidden', !automatic);
   $('hf-help').classList.toggle('hidden', !automatic);
+  $('ollama-field').classList.toggle('hidden', $('llm').value !== 'ollama');
   $('anthropic-field').classList.toggle('hidden', $('llm').value !== 'claude');
   $('openai-field').classList.toggle('hidden', !$('remote').checked);
   if (!capabilities) return;
@@ -876,6 +885,7 @@ function options() {
     model: $('model').value,
     speaker_mode: $('speaker-mode').value,
     llm: $('llm').value,
+    ollama_model: $('ollama-model').value,
     remote: String($('remote').checked),
     render: String($('render').checked)
   })
@@ -897,6 +907,7 @@ function validate() {
     if (!capabilities.diarization) throw Error('Die lokale Sprechererkennung ist noch nicht installiert. Siehe README: pip install -e ".[diarization]".');
     if (!capabilities.hf_token && !capabilities.local_diarization_model && !$('hf-token').value.trim()) throw Error('Bitte zuerst einen freigeschalteten Hugging-Face-Token eingeben.')
   }
+  if ($('llm').value === 'ollama' && (!capabilities.ollama || !$('ollama-model').value)) throw Error('Bitte Ollama starten und ein Chat-Modell lokal installieren. Danach die Seite neu laden.');
   if ($('llm').value === 'claude' && (!capabilities.claude || !capabilities.anthropic_key && !$('anthropic-key').value.trim())) throw Error('Claude benötigt das installierte Claude-Paket und einen Anthropic-API-Schlüssel.');
   if ($('remote').checked && (!capabilities.remote || !capabilities.openai_key && !$('openai-key').value.trim())) throw Error('Remote-Whisper benötigt das OpenAI-Paket und einen API-Schlüssel.')
 }
@@ -1060,6 +1071,13 @@ $('retry').onclick = async () => {
 (async () => {
   try {
     capabilities = await api('/api/status');
+    for (const model of capabilities.ollama_models || []) {
+      const option = el('option', '', model.name + (model.size ? ' · ' + (model.size / 1e9).toFixed(1) + ' GB' : ''));
+      option.value = model.name;
+      $('ollama-model').append(option);
+    }
+    if (!capabilities.ollama) $('ollama-model').append(el('option', '', 'Ollama starten und Modell laden'));
+    $('ollama-model').value = capabilities.ollama_model || '';
     settings();
     stages();
     if (capabilities.demo_url) {

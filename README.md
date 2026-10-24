@@ -1,6 +1,6 @@
 # Interview Heatmap & Schnitt-Advisor
 
-Eine lokale Python-Pipeline für Interview-Aufnahmen: Wort-Zeitstempel, Sprecher, Audio-Merkmale, Heat-Kurve und Schnittvorschläge. Ergebnis: **ein eigenständiger HTML-Report ohne Build, Server oder CDN**, dazu JSON, SRT, TXT und CMX3600-EDLs.
+Eine lokale Python-Pipeline für Interview-Aufnahmen: Wort-Zeitstempel, Sprecher, Audio-Merkmale, Heat-Kurve und Schnittvorschläge. Die Inhaltsanalyse läuft standardmässig mit **Ollama auf dem eigenen Laptop**. Ergebnis: **ein eigenständiger HTML-Report ohne Build, Server oder CDN**, dazu JSON, SRT, TXT und CMX3600-EDLs.
 
 ![Report mit Heat-Kurve und Schnittspuren](docs/preview.png)
 
@@ -19,6 +19,15 @@ python3.12 -m venv .venv
 source .venv/bin/activate
 python -m pip install -e '.[diarization]'
 ```
+
+Für die lokale Inhaltsanalyse [Ollama](https://ollama.com/) installieren und starten:
+
+```bash
+ollama pull gpt-oss:20b
+# Falls Ollama nicht bereits als App läuft: ollama serve
+```
+
+Bereits installierte lokale Chat-Modelle stehen in der Upload-App zur Auswahl. Das Projekt lädt keine Ollama-Modelle automatisch herunter. `gpt-oss:20b` ist ein Open-Weight-Modell unter Apache 2.0 und wurde hier auf einem Laptop mit 36 GiB RAM geprüft. Ein kleineres lokales Chat-Modell kann über die Oberfläche oder `--ollama-model` gewählt werden; dessen eigene Lizenzbedingungen gelten. Modellqualität, Geschwindigkeit und Speicherbedarf unterscheiden sich.
 
 Für die lokale Sprechererkennung:
 
@@ -40,7 +49,7 @@ python server.py --port 8767
 Die Browser-Oberfläche braucht diesen lokalen Python-Server. Der erzeugte Report bleibt eine eigenständige HTML-Datei ohne Serverbedarf. **«Medium wählen» im fertigen Report** ersetzt weiterhin nur die Wiedergabedatei; eine neue Analyse startest du über **«+ Neues Interview»**.
 
 - Automatische Sprechererkennung ist voreingestellt. Falls `HF_TOKEN` nicht in der Serverumgebung gesetzt ist, den freigeschalteten Hugging-Face-Token im geschützten Feld unter **Analyse-Einstellungen & Zugangsdaten** eingeben. Fehlende Voraussetzungen werden vor dem eigentlichen Upload angezeigt. **«Genau eine Stimme»** ist ausschliesslich für entsprechende Aufnahmen gedacht.
-- Standardmässig bleibt Audio lokal und die Inhaltsanalyse nutzt die gekennzeichnete Heuristik. Für semantische Zusammenfassung, Kapitel, Dramaturgie und redaktionelle Clip-Empfehlungen **Claude** auswählen und den Anthropic-Schlüssel eingeben. Dadurch wird Transkripttext an Anthropic gesendet.
+- **Ollama ist voreingestellt** und erstellt inhaltliche Zusammenfassung, Kapitel, Dramaturgie und Schnittvorschläge lokal. Dafür sind keine OpenAI-/Anthropic-Schlüssel nötig. Die einfachere Heuristik ist separat auswählbar. Claude bleibt ein ausdrücklich zu aktivierender Cloud-Modus; dabei wird Text an Anthropic gesendet.
 - Die zusätzliche Checkbox für Remote-Whisper sendet Audio nur bei ausdrücklicher Auswahl an OpenAI. Zugangsdaten werden ausschliesslich im Arbeitsspeicher verarbeitet und aus gespeicherten Prozesslogs entfernt; sie stehen weder in Auftrags-JSON noch URLs oder Browser-Speicher.
 - Uploads werden in Blöcken geschrieben, maximal 20 GiB pro Datei. Pro Aufnahme gibt es `output/uploads/<Auftrags-ID>/input/`, `output/`, `job.json` und `pipeline.log`. Originale werden nicht in öffentliche Repositories übertragen. Mehrere Aufträge werden nacheinander verarbeitet.
 - Ein offener Browser-Tab ist nach dem Upload nicht erforderlich. Der lokale Server muss weiterlaufen. Nach einem Serverneustart erscheinen unterbrochene Aufträge als Fehler und können ohne erneuten Upload gestartet werden; passende Pipeline-Caches werden weiterverwendet. Unvollständige Uploads müssen erneut hochgeladen werden.
@@ -56,9 +65,25 @@ python heatmap.py interview.mp4 --out ./output --lang de
 
 `output/report.html` per Doppelklick öffnen. Die extrahierte `audio.wav` liegt bereits daneben. Bei fehlendem Originalvideo verwendet der Player diese Audiospur. Mit `--copy-media` wird auch das Original zum Report kopiert; alternativ im Report **Medium wählen**. Die Datei wird dabei ausschliesslich im Browser geöffnet.
 
-Standardmässig laufen **Transkription, Diarisierung und Audio-Analyse lokal**. Ohne LLM-Flag liefert eine deutlich gekennzeichnete Schlüsselwort-Heuristik erste Scores und Strukturvorschläge. Eine inhaltliche Drei-Satz-Zusammenfassung, semantische Kapitel und redaktionell begründete Dramaturgie benötigen den folgenden optionalen Modus.
+Standardmässig laufen **Transkription, Diarisierung, Audio- und Inhaltsanalyse lokal**. `--llm ollama` ist voreingestellt. Ohne laufendes Ollama oder passendes Modell erscheint eine klare Fehlermeldung; es gibt keinen stillen Wechsel zur Heuristik.
 
-## Inhaltliche Analyse mit Claude
+## Inhaltliche Analyse mit Ollama
+
+```bash
+python heatmap.py interview.mp4 --out output --llm ollama --ollama-model gpt-oss:20b
+# Schneller Modus ohne LLM, z.B. für erste technische Tests:
+python heatmap.py interview.mp4 --out output --llm local
+```
+
+Ollama erhält Transkripttext ausschliesslich über `127.0.0.1` bzw. IPv6-Loopback. HTTP-Proxies, Redirects, nicht lokale Hosts und Cloud-Modelle werden abgelehnt. Das Modell muss bereits installiert sein und darf laut `/api/show` kein Remote-Modell sein. Die Anwendung verändert keine globalen Ollama-Einstellungen. Wer zusätzlich Ollamas Cloud-Funktionen vollständig abschalten möchte, kann dies nach der [Ollama-Dokumentation](https://docs.ollama.com/faq#how-do-i-disable-ollamas-cloud-features) selbst konfigurieren.
+
+Modell, Endpoint, Kontext, Ausgabeumfang und Zeitlimit stehen in `config.yaml` unter `analysis.ollama_*`. Standard: 32'768 Kontexttokens, 8'192 Ausgabetokens, 600 Sekunden pro Anfrage. Das Kontextbudget wird vor dem Senden konservativ geprüft. Ausgabe erfolgt mit JSON-Schema und wird zusätzlich in Python validiert; unvollständige Antworten werden nicht als fertige Analyse verwendet.
+
+Lokale Modelle erhalten überlappende 150-Sekunden-Fenster. Der zweite Durchgang nutzt **alle Abschnittszusammenfassungen, alle Segment-Scores samt Zeitbereichen und eine Auswahl starker Originalpassagen**. Er sendet bewusst keine unbeschränkte Kopie des gesamten Worttranskripts in einen Laptop-Kontext. So bleibt auch die Gesamtanalyse langer Interviews begrenzt. Die verwendete Methode und der Digest der Modellgewichte stehen in `analysis.json`. Wenn selbst diese Übersicht nicht ins Budget passt, wird mit einem Hinweis abgebrochen. Fehlende IDs oder ungültige Dramaturgie werden bis zu zweimal erneut angefragt; ungültige Antworten werden nicht gecacht.
+
+Laufzeit hängt von Interviewlänge, Modell und Hardware ab. Die Inhaltsanalyse eines langen Interviews kann deutlich länger dauern als die Transkription. Der Server zeigt das aktuelle Analysefenster; ein vorhandener LLM-Cache wird wiederverwendet.
+
+## Optional: Inhaltliche Analyse mit Claude
 
 ```bash
 python -m pip install -e '.[claude]'
@@ -117,7 +142,7 @@ python heatmap.py interview.mp4 --out output --offline \
   --diarization-model /pfad/zu/pyannote-community-1
 ```
 
-`--offline` lehnt `--remote` und `--llm claude` ab und aktiviert den Offline-Modus von Hugging Face. pyannote-Telemetrie und Hugging-Face-Telemetrie sind immer deaktiviert. Ein Offline-Lauf benötigt sämtliche Modellgewichte bereits lokal; ein Token ersetzt diese Gewichte nicht.
+`--offline` erlaubt weiterhin lokales Ollama auf Loopback, lehnt aber `--remote` und `--llm claude` ab und aktiviert den Offline-Modus von Hugging Face. pyannote-Telemetrie und Hugging-Face-Telemetrie sind immer deaktiviert. Ein Offline-Lauf benötigt sämtliche Modellgewichte bereits lokal; ein Token ersetzt diese Gewichte nicht.
 
 SHA-256 der Quelle, Sprache, Modell, Device, Präzision und Sprecheroptionen bestimmen den Transkript-Cache. Bei einem abweichenden Fingerprint bricht `--skip-transcribe` ab. Audio-Merkmale, einzelne LLM-Fenster und der Gesamtpass werden separat gecacht. Änderungen an Heat-Gewichten benötigen keine neue Transkription. Cache-Dateien werden atomar geschrieben. Zum gezielten Wiederholen einer Analyse die passende Datei in `output/cache/` entfernen.
 
@@ -125,7 +150,7 @@ SHA-256 der Quelle, Sprache, Modell, Device, Präzision und Sprecheroptionen bes
 
 - RMS, Pitch-Variation in Halbtönen, Wörter/Sekunde, Pause vor dem Segment und Sprecherüberlappung werden pro Stimme mit z-Scores normalisiert. Nahezu konstante Pitch-Varianz wird nicht durch Messrauschen verstärkt. Audio-Score: Sigmoid aus gewichteten z-Scores.
 - Lachen wird mangels zuverlässigem Klassifikator als `null` exportiert, nicht als vermeintlich gemessener Wert. Pitch aus YIN bleibt ein akustischer Erregungsindikator, keine Emotionsmessung.
-- `heat_final = 0.6 * (heat_llm / 10) + 0.4 * audio_score`; ohne Claude ersetzt die gekennzeichnete Heuristik `heat_llm`. Gewichte in `config.yaml` müssen zusammen 1 ergeben.
+- `heat_final = 0.6 * (heat_llm / 10) + 0.4 * audio_score`; bei `--llm local` ersetzt die gekennzeichnete Heuristik `heat_llm`. Gewichte in `config.yaml` müssen zusammen 1 ergeben.
 - Ein-Sekunden-Kurve mit gleitendem Mittel über 15 Sekunden; Peaks über Mindestabstand und Prominenz. Stille wird als 0 berücksichtigt.
 - Hooks: vollständige Sätze in 5–15 Sekunden. Social Clips: 15–60 Sekunden, höchstens acht nicht überlappende Vorschläge, Schluss und verifizierte Zitate werden bevorzugt. Fehlt geeignetes Material, werden weniger Vorschläge mit Hinweis ausgegeben.
 - Kurzfassungen: chronologisch, Einstieg und Abschluss sowie starke Passagen je Dramaturgiephase. Gesamtdauer inklusive zusammengefügter Pausen bleibt im Zielbudget. Bei kurzem Ausgangsmaterial oder fehlenden Satzgrenzen ist die Auswahl kürzer.
@@ -197,7 +222,8 @@ Auf dem Entwicklungsrechner geprüft:
 
 - 2:50-Minuten-Aufnahme mit `tiny`/CPU/int8: reale lokale Transkription, Wortzeiten, zwei importierte Stimmen, Audio-Merkmale, Report, SRT/JSON/EDL und Clip-Rendering.
 - Dieselbe Aufnahme zusätzlich mit `medium`/CPU/int8: erfolgreiche vollständige Pipeline mit dem CPU-Standardmodell. Ein weiterer echter `tiny`-Lauf bestand mit auf Python-Ebene blockierten TCP-Verbindungen.
-- 60 Minuten wiederholte synthetische Sprache, `tiny`/CPU/int8, `--offline`: vollständige Pipeline, 7'655 Wörter, 755 Segmente, 64 Peaks, acht Social Clips. Dauer ca. 112 Sekunden, maximaler Resident-Speicher ca. 5.1 GB. Dies ist kein Benchmark für natürliche Interviews oder `medium`/`large-v3`.
+- 60 Minuten wiederholte synthetische Sprache, `tiny`/CPU/int8, lokale Heuristik (`--llm local`), `--offline`: vollständige Pipeline, 7'655 Wörter, 755 Segmente, 64 Peaks, acht Social Clips. Dauer ca. 112 Sekunden, maximaler Resident-Speicher ca. 5.1 GB. Dies ist kein Benchmark für natürliche Interviews oder `medium`/`large-v3`.
+- Echte Ollama-Analyse mit installiertem `gpt-oss:20b`: zwei Fenster der 2:50-Minuten-Aufnahme und anschliessende Gesamtdramaturgie, ohne Cloud-Schlüssel; drei Kapitel, fünf Phasen und drei Höhepunkte. Das ist kein Qualitätsbenchmark für natürliche Langinterviews.
 - Browser unter `file://`: korrekter Clip-Start und -Stopp, Suche, gespeicherte Sprechernamen, Downloads, Dark Mode und 768px Breite; keine HTTP-Aufrufe.
 - Browser-Upload mit echter Ein-Stimmen-Aufnahme: alle sieben CLI-Schritte, gerenderte Clips, automatische Weiterleitung, korrekte Wiedergabe und Exporte; beschädigte Aufnahme mit Fehleranzeige. Kein externer HTTP-Aufruf des Browsers. Automatische Server-Tests prüfen zusätzlich Upload-Isolation, Limits, Origin/CSRF/Host-Schutz, Byte-Ranges, Neustart/Wiederaufnahme und das Entfernen von Schlüsseln aus Logs.
 - Automatische Tests für echte Zitatprüfung, Cache-Invalidierung, individuelle Sprecher-Normalisierung, Zeitbudgets, Schnittgrenzen, EDL-Timecodes, HTML-Injection, LLM-Verträge und Remote-Chunk-Offsets.
@@ -208,16 +234,22 @@ Auf dem Entwicklungsrechner geprüft:
 
 Lokale Verarbeitung unterstützt einen datensparsamen Workflow, ist aber keine pauschale CH-DSG-Konformitätszusage. Transkript, Sprecherzuordnung und Audiodateien können personenbezogene Informationen enthalten. Ausgabeordner, Cache und Reports entsprechend schützen. Vor einem Remote-Modus die konkrete Übermittlung und deren Rechtsgrundlage/Verträge prüfen. Das Projekt lädt keine Interviewdaten automatisch hoch; auch Git ignoriert Ausgaben, Testmedien und `.env`-Dateien.
 
+## Open Source und Modelllizenzen
+
+Der eigene Projektcode steht unter der [MIT-Lizenz](LICENSE). Drittkomponenten und Modellgewichte haben eigene Bedingungen; sie werden nicht als Teil des Projektcodes neu lizenziert. Insbesondere: Ollama und Whisper/faster-whisper sind quelloffene Software, `gpt-oss` hat offene Gewichte unter Apache 2.0, pyannote community-1 nennt CC-BY-4.0 für seine Gewichte und erfordert vor dem Erstdownload die persönliche Modellfreigabe. Andere Ollama-Modelle können andere oder eingeschränktere Bedingungen haben. Siehe [Drittkomponenten](THIRD_PARTY_NOTICES.md).
+
+Für spätere Läufe ohne Hugging-Face-Token das freigeschaltete community-1-Modell vollständig lokal herunterladen und in einer eigenen YAML-Konfiguration `transcription.diarization_model` auf dieses Verzeichnis setzen. Der Server erkennt einen lokalen Modellpfad und verlangt dann keinen Token. Der Token betrifft den Modelldownload, keine Audioübermittlung; die Sprechererkennung findet lokal statt.
+
 ## Struktur
 
 ```text
 heatmap.py
 server.py  # lokale Upload-App
-pipeline/{audio,transcribe,analyze,scoring,cuts,report,common}.py
+pipeline/{audio,transcribe,analyze,ollama,scoring,cuts,report,common}.py
 templates/{upload,report}.html
 config.yaml
 scripts/{make_test_audio,verify_report,verify_upload}.py
 tests/
 ```
 
-Referenzen: [faster-whisper](https://github.com/SYSTRAN/faster-whisper), [community-1](https://huggingface.co/pyannote/speaker-diarization-community-1), [Claude Structured Outputs](https://platform.claude.com/docs/en/build-with-claude/structured-outputs), [OpenAI Speech to Text](https://developers.openai.com/api/docs/guides/speech-to-text).
+Referenzen: [Ollama Structured Outputs](https://docs.ollama.com/capabilities/structured-outputs), [gpt-oss](https://openai.com/open-models/), [faster-whisper](https://github.com/SYSTRAN/faster-whisper), [community-1](https://huggingface.co/pyannote/speaker-diarization-community-1), [Claude Structured Outputs](https://platform.claude.com/docs/en/build-with-claude/structured-outputs), [OpenAI Speech to Text](https://developers.openai.com/api/docs/guides/speech-to-text).

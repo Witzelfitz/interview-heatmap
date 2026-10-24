@@ -20,6 +20,7 @@ from urllib.parse import parse_qs, unquote, urlsplit
 
 from heatmap import ROOT, load_config
 from pipeline.common import write_json
+from pipeline.ollama import Ollama
 
 MEDIA_EXTENSIONS = {
     ".mp4",
@@ -86,6 +87,12 @@ class Jobs:
     def capabilities(self):
         config = load_config(self.config)
         model = config["transcription"]["diarization_model"]
+        try:
+            models = Ollama(config["analysis"]["ollama_url"], timeout=1).models()
+        except (OSError, ValueError, RuntimeError):
+            models = []
+        model_names = [m["name"] for m in models]
+        preferred = config["analysis"]["ollama_model"]
         return {
             "ffmpeg": bool(shutil.which("ffmpeg") and shutil.which("ffprobe")),
             "diarization": module_available("pyannote.audio"),
@@ -95,6 +102,13 @@ class Jobs:
             "anthropic_key": bool(os.environ.get("ANTHROPIC_API_KEY")),
             "remote": module_available("openai"),
             "openai_key": bool(os.environ.get("OPENAI_API_KEY")),
+            "ollama": bool(models),
+            "ollama_models": [{"name": m["name"], "size": m.get("size", 0)} for m in models],
+            "ollama_model": preferred
+            if preferred in model_names
+            else model_names[0]
+            if model_names
+            else preferred,
             "demo_url": "/demo/report.html" if self.demo else None,
             "stages": STAGES,
         }
@@ -107,7 +121,8 @@ class Jobs:
             "lang": value("lang", "de"),
             "model": value("model", "auto"),
             "speaker_mode": value("speaker_mode", "auto"),
-            "llm": value("llm", "local"),
+            "llm": value("llm", "ollama"),
+            "ollama_model": value("ollama_model", ""),
             "remote": value("remote", "false") == "true",
             "render": value("render", "true") == "true",
         }
@@ -115,12 +130,21 @@ class Jobs:
             options["lang"] not in {"de", "en", "fr", "it"}
             or options["model"] not in {"auto", "large-v3", "medium", "small", "tiny"}
             or options["speaker_mode"] not in {"auto", "single"}
-            or options["llm"] not in {"local", "claude"}
+            or options["llm"] not in {"ollama", "local", "claude"}
         ):
             raise ValueError("Ungültige Analyse-Einstellungen")
         # Nur Prozessumgebung, niemals Job-JSON, URL oder Logdatei.
         credentials = {key: headers.get(header, "").strip() for key, header in SECRET_HEADERS.items()}
         cap = self.capabilities()
+        if options["llm"] == "ollama":
+            if not cap["ollama"]:
+                raise ValueError(
+                    "Ollama starten und ein Chat-Modell lokal installieren (z.B. ollama pull gpt-oss:20b)."
+                )
+            options["ollama_model"] = options["ollama_model"] or cap["ollama_model"]
+            Ollama(load_config(self.config)["analysis"]["ollama_url"], timeout=10).inspect(
+                options["ollama_model"]
+            )
         if not cap["ffmpeg"]:
             raise ValueError("ffmpeg/ffprobe fehlt. Bitte gemäss README installieren.")
         if options["speaker_mode"] == "auto":
@@ -218,6 +242,8 @@ class Jobs:
             command.append("--remote")
         if options["render"]:
             command.append("--render-clips")
+        if options.get("llm") == "ollama":
+            command.extend(["--ollama-model", options["ollama_model"]])
         # Original liegt bereits in input; für den Player später sicher verlinken.
         env = dict(os.environ, **credentials)
         env.pop("HF_HUB_OFFLINE", None)
@@ -243,7 +269,10 @@ class Jobs:
                     match = re.search(r"INFO · ([1-7])/7 (.*)", line)
                     if match:
                         self.update(job_id, stage=int(match[1]), detail=match[2].strip())
-                    elif "Transkribiert bis" in line:
+                    elif any(
+                        marker in line
+                        for marker in ("Transkribiert bis", "Analysefenster", "Gesamtdramaturgie")
+                    ):
                         self.update(job_id, detail=line.split("·", 1)[-1].strip())
                     if "ERROR" in line or "Error:" in line:
                         last_error = line.strip().removeprefix("ERROR · ")[:2000]

@@ -1,10 +1,11 @@
 [build-system]
-requires = ["setuptools>=69"]
+requires = ["setuptools>=77"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "interview-heatmap"
 version = "0.1.0"
+license = "MIT"
 description = "Lokale Interview-Heatmap und Schnitt-Advisor"
 requires-python = ">=3.11"
 dependencies = [

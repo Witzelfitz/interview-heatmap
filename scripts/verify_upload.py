@@ -20,6 +20,7 @@ def main():
         "media", type=Path, help="Tatsächliche Ein-Stimmen-Aufnahme, keine Mehrsprecher-Datei"
     )
     parser.add_argument("--out", type=Path, default=Path("test-output/upload-browser"))
+    parser.add_argument("--llm", choices=["local", "ollama"], default="ollama")
     args = parser.parse_args()
     jobs = Jobs(args.out, ROOT / "config.yaml")
     server = LocalServer(("127.0.0.1", 0), jobs)
@@ -42,6 +43,7 @@ def main():
             )
             page.goto(base)
             page.wait_for_function("capabilities !== null")
+            page.locator("#llm").select_option(args.llm)
             page.locator("#file").set_input_files(str(args.media.resolve()))
             if not jobs.capabilities()["hf_token"]:
                 page.get_by_role("button", name="Interview hochladen & analysieren").click()
@@ -57,7 +59,7 @@ def main():
             page.get_by_role("button", name="Farbschema wechseln").click()
             page.set_viewport_size({"width": 1440, "height": 1050})
             page.get_by_role("button", name="Interview hochladen & analysieren").click()
-            page.wait_for_url(re.compile(r"/jobs/[0-9a-f]{32}/report.html$"), timeout=180000)
+            page.wait_for_url(re.compile(r"/jobs/[0-9a-f]{32}/report.html$"), timeout=600000)
             job_id = page.url.split("/jobs/")[1].split("/")[0]
             page.wait_for_selector(".segment")
             page.wait_for_function('document.querySelector("audio,video").readyState >= 1')
@@ -68,6 +70,7 @@ def main():
             data = json.loads((output / "report.json").read_text())
             assert data["metadata"]["diarization"] == "single_speaker_explicit"
             assert not data["metadata"]["audio_remote"] and not data["metadata"]["text_remote"]
+            assert data["analysis"]["mode"] == ("ollama" if args.llm == "ollama" else "local_heuristic")
             for step in range(1, 8):
                 assert f"{step}/7" in (folder / "pipeline.log").read_text()
             for name in (

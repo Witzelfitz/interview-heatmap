@@ -35,12 +35,15 @@ def parser():
     p.add_argument("--remote", action="store_true", help="Explizit Audio an OpenAI Whisper senden")
     p.add_argument(
         "--llm",
-        choices=["local", "claude"],
-        default="local",
-        help="claude sendet Transkripttext an Anthropic",
+        choices=["ollama", "local", "claude"],
+        default="ollama",
+        help="ollama: lokales LLM; local: Heuristik; claude: Text an Anthropic",
     )
+    p.add_argument("--ollama-model", help="Lokal installiertes Ollama-Modell")
     p.add_argument(
-        "--offline", action="store_true", help="Nur bereits lokale Modelle; keine Downloads/API-Aufrufe"
+        "--offline",
+        action="store_true",
+        help="Nur lokale Modelle; keine Downloads/Cloud-Aufrufe (Ollama auf Loopback erlaubt)",
     )
     group = p.add_mutually_exclusive_group()
     group.add_argument(
@@ -81,6 +84,11 @@ def load_config(path):
     a, s, c = default["analysis"], default["scoring"], default["cuts"]
     if not a["chunk_seconds"] > a["overlap_seconds"] >= 0:
         raise ValueError("chunk_seconds muss grösser als overlap_seconds sein")
+    from pipeline.ollama import local_url
+
+    local_url(a["ollama_url"])
+    if not 0 < a["ollama_max_tokens"] < a["ollama_context"] - 2048 or a["ollama_timeout"] <= 0:
+        raise ValueError("Ungültiges Ollama-Kontext-/Tokenbudget oder Zeitlimit")
     if min(s["llm_weight"], s["audio_weight"]) < 0 or abs(s["llm_weight"] + s["audio_weight"] - 1) > 1e-6:
         raise ValueError("Heat-Gewichte müssen nichtnegativ sein und zusammen 1 ergeben")
     if s["smoothing_seconds"] <= 0 or s["peak_distance_seconds"] <= 0 or s["peak_prominence"] < 0:
@@ -119,6 +127,8 @@ def main(argv=None):
         if args.llm == "claude" and not os.environ.get("ANTHROPIC_API_KEY"):
             raise ValueError("--llm claude benötigt ANTHROPIC_API_KEY")
         config = load_config(args.config)
+        if args.ollama_model:
+            config["analysis"]["ollama_model"] = args.ollama_model
         from pipeline.audio import features, prepare
         from pipeline.common import (
             cached,

@@ -179,7 +179,7 @@ def local_analysis(segments):
         "summary": (
             "Das Interview wurde vollständig lokal ausgewertet. "
             "Heat und Struktur basieren auf Audiosignalen und einer Schlüsselwort-Heuristik. "
-            "Für eine inhaltliche Zusammenfassung und Dramaturgie die optionale Claude-Analyse aktivieren."
+            "Für eine inhaltliche Zusammenfassung und Dramaturgie Ollama oder die optionale Claude-Analyse aktivieren."
         ),
         "chapters": chapters,
         "phases": phases,
@@ -187,41 +187,125 @@ def local_analysis(segments):
     }
 
 
+def compact_overview(segments, scores, sections, config):
+    """Alle Abschnittszusammenfassungen und Scores, plus belegte Schlüsselpassagen."""
+    from .ollama import SYSTEM_PROMPT
+
+    by_id = {s["id"]: s for s in segments}
+    payload = {
+        "section_summaries": sections,
+        "score_columns": ["segment_id", "start", "end", "heat", "speaker"],
+        "segment_scores": [
+            [s["id"], s["start"], s["end"], row["heat"], s["speaker"]]
+            for s, row in zip(segments, scores, strict=True)
+        ],
+        "key_passages": [],
+    }
+    # Zwei Bytes/Token sind für deutsche JSON-Eingaben konservativ; Schema und Ausgabe reservieren.
+    budget = (
+        (config["ollama_context"] - config["ollama_max_tokens"] - 2048) * 2
+        - len(json.dumps(GLOBAL_SCHEMA).encode())
+        - len(SYSTEM_PROMPT.encode())
+    )
+    if len(json.dumps(payload, ensure_ascii=False).encode()) > budget:
+        raise ValueError(
+            "Gesamtübersicht passt nicht in das Ollama-Kontextbudget. ollama_context erhöhen oder längere Analysefenster verwenden."
+        )
+    ids = [segments[0]["id"], segments[-1]["id"]]
+    ids += [row["segment_id"] for row in sorted(scores, key=lambda r: r["heat"], reverse=True)]
+    for sid in dict.fromkeys(ids):
+        s = by_id[sid]
+        passage = {"id": sid, "text": s["text"], "speaker": s["speaker"]}
+        payload["key_passages"].append(passage)
+        if len(json.dumps(payload, ensure_ascii=False).encode()) > budget:
+            payload["key_passages"].pop()
+        if len(payload["key_passages"]) >= 40:
+            break
+    return payload
+
+
 def analyze(segments, config, cache_dir, mode="local"):
     if not segments:
         raise ValueError("Keine Sprache erkannt. Aufnahme/Sprachwahl prüfen.")
     if mode == "local":
         return local_analysis(segments)
-    if not os.environ.get("ANTHROPIC_API_KEY"):
-        raise ValueError("--llm claude benötigt ANTHROPIC_API_KEY")
-    from anthropic import Anthropic
+    if mode == "claude":
+        if not os.environ.get("ANTHROPIC_API_KEY"):
+            raise ValueError("--llm claude benötigt ANTHROPIC_API_KEY")
+        from anthropic import Anthropic
 
-    log.warning("CLAUDE: Transkripttext wird an Anthropic übermittelt; keine Audiodateien.")
-    client = Anthropic(timeout=180, max_retries=3)
+        log.warning("CLAUDE: Transkripttext wird an Anthropic übermittelt; keine Audiodateien.")
+        client = Anthropic(timeout=180, max_retries=3)
+        model, tokens, model_digest = config["model"], config["max_tokens"], ""
+
+        def request(schema, prompt):
+            return request_claude(client, model, schema, prompt, tokens)
+    elif mode == "ollama":
+        from .ollama import Ollama
+
+        client = Ollama(config["ollama_url"], config["ollama_timeout"])
+        model, tokens = config["ollama_model"], config["ollama_max_tokens"]
+        details = client.inspect(model)
+        model_digest = details["digest"]
+        limits = [v for k, v in details.get("model_info", {}).items() if k.endswith(".context_length")]
+        if limits and config["ollama_context"] > max(limits):
+            raise ValueError("ollama_context überschreitet die Kontextlänge dieses Modells.")
+        log.info("Ollama lokal: %s · Kontext %s", model, config["ollama_context"])
+
+        def request(schema, prompt):
+            return client.chat(model, schema, prompt, tokens, config["ollama_context"], details)
+    else:
+        raise ValueError("Unbekannter LLM-Modus")
     by_id, candidates, summaries = {s["id"]: s for s in segments}, {}, []
-    model, tokens = config["model"], config["max_tokens"]
-    for start, group in windows(segments, config["chunk_seconds"], config["overlap_seconds"]):
+    section_ranges = []
+    groups = list(windows(segments, config["chunk_seconds"], config["overlap_seconds"]))
+    for index, (start, group) in enumerate(groups):
+        log.info("Analysefenster %s/%s (%s)", index + 1, len(groups), mode)
         payload = [{k: s[k] for k in ("id", "start", "end", "speaker", "text")} for s in group]
-        key = digest({"data": payload, "config": config, "prompt": "segment-v1"})
+        key = digest(
+            {"data": payload, "config": config, "mode": mode, "digest": model_digest, "prompt": "segment-v2"}
+        )
+        expected = {s["id"] for s in group}
+
+        def compute_window(payload=payload, expected=expected):
+            prompt = (
+                "Bewerte JEDES Segment (heat 0–10, Emotion, Tags, wörtliches Zitat, kurze Begründung). "
+                "Fasse den Abschnitt sachlich zusammen. Eine Frage ist nicht automatisch ein guter Hook.\n"
+                + json.dumps(payload, ensure_ascii=False)
+            )
+            for attempt in range(3 if mode == "ollama" else 1):
+                data = request(SEGMENT_SCHEMA, prompt)
+                received = [r["segment_id"] for r in data["segments"]]
+                if set(received) == expected and len(received) == len(expected):
+                    data["segments"] = [
+                        checked_score(row, by_id[row["segment_id"]]) for row in data["segments"]
+                    ]
+                    return data
+                log.warning("LLM lieferte unvollständige Segment-IDs; Wiederholung %s", attempt + 1)
+                prompt += "\nKorrektur: Jedes dieser IDs genau einmal bewerten: " + json.dumps(
+                    sorted(expected)
+                )
+            raise ValueError(
+                "LLM muss jedes angeforderte Segment genau einmal bewerten. Kein unvollständiger Cache gespeichert."
+            )
+
         data = cached(
             cache_dir / f"analysis-{key}.json",
             key,
-            lambda payload=payload: request_claude(
-                client,
-                model,
-                SEGMENT_SCHEMA,
-                "Bewerte JEDES Segment (heat 0–10, Emotion, Tags, wörtliches Zitat, kurze Begründung). "
-                "Fasse den Abschnitt sachlich zusammen. Eine Frage ist nicht automatisch ein guter Hook.\n"
-                + json.dumps(payload, ensure_ascii=False),
-                tokens,
-            ),
+            compute_window,
         )
         jsonschema.validate(data, SEGMENT_SCHEMA)
-        expected = {s["id"] for s in group}
         received = [r["segment_id"] for r in data["segments"]]
         if set(received) != expected or len(received) != len(expected):
-            raise ValueError("Claude muss jedes Segment genau einmal bewerten; Cache-Datei prüfen.")
+            raise ValueError("LLM muss jedes Segment genau einmal bewerten; Cache-Datei prüfen.")
         summaries.append(data["summary"])
+        section_ranges.append(
+            {
+                "start_segment_id": group[0]["id"],
+                "end_segment_id": group[-1]["id"],
+                "summary": data["summary"],
+            }
+        )
         center = start + config["chunk_seconds"] / 2
         for row in data["segments"]:
             sid = row["segment_id"]
@@ -235,29 +319,63 @@ def analyze(segments, config, cache_dir, mode="local"):
         "scores": scores,
         "transcript": [{k: s[k] for k in ("id", "start", "end", "speaker", "text")} for s in segments],
     }
-    key = digest({"payload": payload, "model": model, "tokens": tokens, "prompt": "global-v2"})
+    if mode == "ollama":
+        payload = compact_overview(segments, scores, section_ranges, config)
+    key = digest(
+        {
+            "payload": payload,
+            "model": model,
+            "tokens": tokens,
+            "mode": mode,
+            "digest": model_digest,
+            "prompt": "global-v3",
+        }
+    )
+    log.info("Gesamtdramaturgie erstellen (%s)", mode)
+    global_prompt = (
+        "Analysiere das gesamte Interview: eine sachliche Zusammenfassung in drei Sätzen, "
+        "thematische Kapitel, Spannungsbogen mit Phasen, 3–5 stärkste Höhepunkte mit Begründung. "
+        "Zeitbereiche ausschliesslich über existierende start_segment_id/end_segment_id "
+        "angeben. Kapitel chronologisch ohne Überlappung, ebenso Phasen. "
+        "Bei sehr kurzen Aufnahmen dürfen es weniger Höhepunkte sein.\n"
+        "Empfiehl ausserdem bis zu drei Hooks (5–15 s, offene Frage ohne Auflösung) und "
+        "3–8 eigenständige Social Clips (15–60 s, klarer Einstieg und Pointe/Erkenntnis am Ende). "
+        "Nutze Segment-IDs, vollständige Sätze, knappe redaktionelle Titel ohne Anführungszeichen "
+        "und eine konkrete Begründung. Kein passendes Material: leere Liste statt erfinden.\n"
+        + json.dumps(payload, ensure_ascii=False)
+    )
+
+    def compute_global():
+        prompt = global_prompt
+        for attempt in range(3 if mode == "ollama" else 1):
+            data = request(GLOBAL_SCHEMA, prompt)
+            try:
+                final_analysis(data, by_id, scores, mode, model, model_digest)
+                return data
+            except ValueError as exc:
+                log.warning("Ungültige Dramaturgie, Versuch %s: %s", attempt + 1, exc)
+                prompt += f"\nKorrektur: {exc}. Ausschliesslich existierende IDs, Bereiche chronologisch ohne Überlappung."
+        raise ValueError("LLM lieferte keine gültige Gesamtdramaturgie; ungültige Antwort nicht gecacht.")
+
     global_data = cached(
         cache_dir / f"dramaturgy-{key}.json",
         key,
-        lambda: request_claude(
-            client,
-            model,
-            GLOBAL_SCHEMA,
-            "Analysiere das gesamte Interview: eine sachliche Zusammenfassung in drei Sätzen, "
-            "thematische Kapitel, Spannungsbogen mit Phasen, 3–5 stärkste Höhepunkte mit Begründung. "
-            "Zeitbereiche ausschliesslich über existierende start_segment_id/end_segment_id "
-            "angeben. Kapitel chronologisch ohne Überlappung, ebenso Phasen. "
-            "Bei sehr kurzen Aufnahmen dürfen es weniger Höhepunkte sein.\n"
-            "Empfiehl ausserdem bis zu drei Hooks (5–15 s, offene Frage ohne Auflösung) und "
-            "3–8 eigenständige Social Clips (15–60 s, klarer Einstieg und Pointe/Erkenntnis am Ende). "
-            "Nutze Segment-IDs, vollständige Sätze, knappe redaktionelle Titel ohne Anführungszeichen "
-            "und eine konkrete Begründung. Kein passendes Material: leere Liste statt erfinden.\n"
-            + json.dumps(payload, ensure_ascii=False),
-            tokens,
-        ),
+        compute_global,
     )
     jsonschema.validate(global_data, GLOBAL_SCHEMA)
-    result = {"mode": "claude", "model": model, "segments": scores, "summary": swiss(global_data["summary"])}
+    return final_analysis(global_data, by_id, scores, mode, model, model_digest)
+
+
+def final_analysis(global_data, by_id, scores, mode, model, model_digest):
+    jsonschema.validate(global_data, GLOBAL_SCHEMA)
+    result = {
+        "mode": mode,
+        "model": model,
+        "model_digest": model_digest,
+        "segments": scores,
+        "global_input": "section_summaries_and_all_scores" if mode == "ollama" else "full_transcript",
+        "summary": swiss(global_data["summary"]),
+    }
     for field in ("chapters", "phases"):
         result[field] = []
         last_end = 0.0

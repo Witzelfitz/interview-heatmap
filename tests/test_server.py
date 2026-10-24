@@ -42,7 +42,7 @@ def app(tmp_path, monkeypatch):
 
 def post_path(filename="aufnahme.wav", **options):
     return "/api/jobs?" + urlencode(
-        {"filename": filename, "speaker_mode": "single", "model": "tiny", **options}
+        {"filename": filename, "speaker_mode": "single", "model": "tiny", "llm": "local", **options}
     )
 
 
@@ -121,12 +121,12 @@ def test_retry_reuses_upload_and_rejects_incomplete_data(app):
     record = json.loads(request("POST", post_path(), b"audio")[2])
     job_id = record["id"]
     jobs.update(job_id, state="failed")
-    path = f"/api/jobs/{job_id}/retry?speaker_mode=single&model=tiny"
+    path = f"/api/jobs/{job_id}/retry?speaker_mode=single&model=tiny&llm=local"
     assert request("POST", path, b"")[0] == 202
     assert len(queued) == 2
     assert request("POST", path, b"")[0] == 400
     assert jobs.get(job_id)["state"] == "queued"
-    assert request("POST", f"/api/jobs/{'f' * 32}/retry?speaker_mode=single", b"")[0] == 400
+    assert request("POST", f"/api/jobs/{'f' * 32}/retry?speaker_mode=single&llm=local", b"")[0] == 400
     jobs.update(job_id, state="failed", upload_complete=False)
     assert request("POST", path, b"")[0] == 400
 

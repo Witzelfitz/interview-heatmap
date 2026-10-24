@@ -5,6 +5,11 @@ transcription:
   diarization_model: pyannote/speaker-diarization-community-1
 analysis:
   model: claude-sonnet-4-6
+  ollama_url: http://127.0.0.1:11434
+  ollama_model: gpt-oss:20b
+  ollama_context: 32768
+  ollama_max_tokens: 8192
+  ollama_timeout: 600
   chunk_seconds: 150
   overlap_seconds: 20
   max_tokens: 16000

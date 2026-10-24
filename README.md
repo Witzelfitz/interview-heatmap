@@ -4,6 +4,22 @@ Eine lokale Python-Pipeline für Interview-Aufnahmen: Wort-Zeitstempel, Sprecher
 
 ![Report mit Heat-Kurve und Schnittspuren](docs/preview.png)
 
+## Bebilderte Vorstellung
+
+[Browser-Tour öffnen](http://localhost:8767/vorstellung/) · [PDF herunterladen](docs/vorstellung.pdf)
+
+Acht Stationen führen mit authentischen Screenshots durch Upload, Verarbeitung, Heatmap, Transkript, Schnittvorschläge und Export. Jeder Schritt nennt die Aktion, das sichtbare Ergebnis und wichtige Prüfpunkte. Die Screenshots verwenden ausschliesslich eine selbst erzeugte synthetische Demo-Aufnahme. Die HTML-Tour enthält die Bilder direkt und funktioniert auch als lokale Datei; die PDF umfasst acht Seiten im Querformat.
+
+Zum erneuten Erstellen:
+
+```bash
+python -m pip install -e '.[documentation]'
+python scripts/capture_walkthrough.py demo.wav  # nur eine synthetische Demo-Aufnahme verwenden
+python scripts/build_walkthrough.py
+```
+
+Das Aufnahmeskript führt die tatsächliche Pipeline in einer isolierten Auftragsverwaltung aus und erstellt keine fingierten Fortschrittsanzeigen. Die Erzeugung ist daher ein vollständiger lokaler Analyselauf mit entsprechendem Zeitbedarf. Dateien liegen in `docs/screenshots/`, `docs/vorstellung.html`, `docs/vorstellung.pdf` und zusätzlich `output/pdf/schnittplatz-vorstellung.pdf`.
+
 ## Installation
 
 Empfohlen: **Python 3.12**; Mindestversion 3.11. ffmpeg und ffprobe müssen im PATH liegen.

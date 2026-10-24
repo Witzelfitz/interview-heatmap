@@ -123,6 +123,16 @@ def test_report_access_blocks_private_files_and_supports_media_ranges(app):
     assert request("GET", f"/jobs/{job_id}/audio.wav", headers={"Range": "bytes=200-"})[0] == 416
 
 
+def test_walkthrough_and_pdf_routes_are_read_only_and_explicit(app):
+    _, _, request, _ = app
+    status, _, data = request("GET", "/vorstellung/")
+    assert status == 200 and b"Schnittplatz" in data
+    status, headers, data = request("GET", "/vorstellung/vorstellung.pdf")
+    assert status == 200 and data.startswith(b"%PDF-")
+    assert headers["Content-Type"] == "application/pdf"
+    assert request("GET", "/vorstellung/../../config.yaml")[0] == 404
+
+
 def test_restart_marks_interrupted_job_failed_and_retains_upload(app):
     jobs, _, request, _ = app
     record = json.loads(request("POST", post_path(), b"audio")[2])

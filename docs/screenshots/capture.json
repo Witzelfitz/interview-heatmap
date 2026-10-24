@@ -1,0 +1,29 @@
+{
+  "filename": "Demo-Interview-Quartiercafe.wav",
+  "synthetic": true,
+  "duration": 170.512625,
+  "speakers": [
+    "S1",
+    "S2"
+  ],
+  "model": "gpt-oss:20b",
+  "asr": {
+    "language": "de",
+    "model": "medium",
+    "device": "cpu",
+    "backend": "faster-whisper"
+  },
+  "screenshots": [
+    "01-upload-panel.png",
+    "01-upload.png",
+    "02-einstellungen.png",
+    "03-verarbeitung.png",
+    "04-report.png",
+    "05-heatmap.png",
+    "06-transkript.png",
+    "07-clips.png",
+    "08-kurzfassung.png",
+    "09-export.png",
+    "10-darkmode.png"
+  ]
+}

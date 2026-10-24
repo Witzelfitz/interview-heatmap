@@ -334,6 +334,10 @@ class Handler(BaseHTTPRequestHandler):
             self.end_headers()
         elif path == "/":
             self.serve_file(ROOT / "templates" / "upload.html")
+        elif path in {"/vorstellung", "/vorstellung/", "/vorstellung.html"}:
+            self.serve_file(ROOT / "docs" / "vorstellung.html")
+        elif path in {"/vorstellung.pdf", "/vorstellung/vorstellung.pdf"}:
+            self.serve_file(ROOT / "docs" / "vorstellung.pdf")
         elif path == "/api/status":
             self.reply(
                 200,

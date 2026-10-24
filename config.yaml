@@ -1,0 +1,27 @@
+transcription:
+  model: auto # large-v3 mit CUDA und genug Speicher, sonst medium
+  device: auto
+  compute_type: auto
+  diarization_model: pyannote/speaker-diarization-community-1
+analysis:
+  model: claude-sonnet-4-6
+  chunk_seconds: 150
+  overlap_seconds: 20
+  max_tokens: 16000
+scoring:
+  llm_weight: 0.6
+  audio_weight: 0.4
+  smoothing_seconds: 15
+  peak_distance_seconds: 25
+  peak_prominence: 0.06
+cuts:
+  hook_min_seconds: 5
+  hook_max_seconds: 15
+  clip_min_seconds: 15
+  clip_max_seconds: 60
+  clip_count: 8
+  short_minutes: [3, 5, 10]
+  pause_padding_seconds: 0.08
+  retention_threshold: 0.35
+  retention_seconds: 90
+  edl_fps: 25 # CMX3600 non-drop-frame: 24, 25 oder 30

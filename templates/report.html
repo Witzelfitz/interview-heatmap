@@ -1,0 +1,1689 @@
+<!DOCTYPE html>
+<html data-theme="light" lang="de-CH">
+ <head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width,initial-scale=1" name="viewport"/>
+  <meta content="light dark" name="color-scheme"/>
+  <title>
+   Interview Heatmap · Schnittplatz
+  </title>
+  <style>
+   :root {
+  --bg: #f4f3ef;
+  --panel: #fff;
+  --ink: #202c2b;
+  --muted: #6e7976;
+  --border: #e2e5de;
+  --accent: #355b50;
+  --soft: #eaf0e8;
+  --hot: #db6a43;
+  --cool: #8bb7b1;
+  --shadow: 0 5px 22px #263d3110;
+  --radius: 14px
+}
+
+[data-theme=dark] {
+  --bg: #151e1d;
+  --panel: #1d2927;
+  --ink: #e5ede8;
+  --muted: #a1b2ab;
+  --border: #34443f;
+  --accent: #a5c9b4;
+  --soft: #2e4038;
+  --hot: #f49d74;
+  --cool: #72a6a0;
+  --shadow: none
+}
+
+* {
+  box-sizing: border-box
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font: 14px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif
+}
+
+button,
+input,
+select {
+  font: inherit
+}
+
+button {
+  cursor: pointer
+}
+
+button,
+a,
+input,
+select {
+  outline-offset: 4px
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible {
+  outline: 2px solid var(--hot)
+}
+
+button {
+  border: 1px solid var(--border);
+  background: var(--panel);
+  color: var(--ink);
+  border-radius: 7px;
+  padding: 8px 12px
+}
+
+button:hover {
+  border-color: var(--accent)
+}
+
+button.primary {
+  background: var(--accent);
+  color: var(--bg);
+  border-color: var(--accent)
+}
+
+main {
+  max-width: 1400px;
+  margin: auto;
+  padding: 0 36px 175px
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border);
+  padding: 22px 0;
+  gap: 20px
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  font-weight: 750;
+  font-size: 17px;
+  letter-spacing: -.4px
+}
+
+.logo {
+  background: var(--accent);
+  color: var(--bg);
+  border-radius: 9px;
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  font-size: 22px
+}
+
+.brand small {
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 1px;
+  color: var(--muted);
+  margin-left: 13px
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap
+}
+
+.eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 1.8px;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--muted)
+}
+
+.hero {
+  display: grid;
+  grid-template-columns: 1.1fr 1fr;
+  gap: 60px;
+  padding: 37px 0 25px;
+  align-items: center
+}
+
+h1 {
+  font-size: clamp(28px, 3.2vw, 44px);
+  letter-spacing: -1.8px;
+  line-height: 1.13;
+  margin: 12px 0 14px;
+  font-weight: 650
+}
+
+h1 span {
+  color: var(--muted)
+}
+
+.filename {
+  color: var(--muted);
+  overflow-wrap: anywhere
+}
+
+.badge {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+  font-size: 11px;
+  background: var(--soft);
+  color: var(--accent);
+  padding: 5px 9px;
+  border-radius: 5px
+}
+
+.badge::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  background: currentColor;
+  border-radius: 50%
+}
+
+.summary {
+  font-size: 15px;
+  line-height: 1.8;
+  color: var(--muted);
+  border-left: 2px solid var(--hot);
+  padding-left: 24px
+}
+
+.summary strong {
+  display: block;
+  color: var(--ink);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 8px
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--panel);
+  margin: 0 0 18px;
+  padding: 18px 8px
+}
+
+.stat {
+  padding: 0 22px;
+  border-right: 1px solid var(--border)
+}
+
+.stat:last-child {
+  border: 0
+}
+
+.stat b {
+  font-size: 25px;
+  font-weight: 600;
+  letter-spacing: -.7px;
+  display: block
+}
+
+.stat span {
+  font-size: 11px;
+  color: var(--muted)
+}
+
+.notice {
+  font-size: 11px;
+  color: var(--muted);
+  margin: 12px 0 23px;
+  display: flex;
+  gap: 10px;
+  align-items: flex-start
+}
+
+.notice b {
+  color: var(--accent)
+}
+
+.panel {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--panel);
+  box-shadow: var(--shadow);
+  overflow: hidden
+}
+
+.panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 20px 22px;
+  border-bottom: 1px solid var(--border)
+}
+
+h2 {
+  font-size: 16px;
+  font-weight: 650;
+  margin: 0;
+  letter-spacing: -.3px
+}
+
+h2 small {
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--muted);
+  margin-left: 12px
+}
+
+.legend {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  font-size: 10px;
+  color: var(--muted)
+}
+
+.legend i {
+  width: 90px;
+  height: 5px;
+  background: linear-gradient(90deg, var(--cool), #d1bc75, var(--hot));
+  border-radius: 4px
+}
+
+.timeline-body {
+  padding: 18px 22px
+}
+
+.chart-wrap {
+  position: relative;
+  margin-left: 90px
+}
+
+.chart {
+  width: 100%;
+  height: 210px;
+  display: block;
+  cursor: crosshair;
+  overflow: visible
+}
+
+.chart text {
+  fill: var(--muted);
+  font-size: 10px
+}
+
+.chart .grid {
+  stroke: var(--border);
+  stroke-dasharray: 3 5
+}
+
+.chart .line {
+  stroke: var(--accent);
+  stroke-width: 1.8;
+  fill: none
+}
+
+.chart .cursor {
+  stroke: var(--ink);
+  stroke-width: 1;
+  stroke-dasharray: 4 3
+}
+
+.ruler {
+  position: relative;
+  height: 26px;
+  margin: 0 0 0 90px;
+  color: var(--muted);
+  font-size: 10px
+}
+
+.ruler span {
+  position: absolute;
+  transform: translateX(-50%)
+}
+
+.lane {
+  display: grid;
+  grid-template-columns: 80px 1fr;
+  gap: 10px;
+  align-items: center;
+  margin: 7px 0
+}
+
+.lane-label {
+  font-size: 10px;
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap
+}
+
+.track {
+  height: 23px;
+  position: relative;
+  background: var(--bg);
+  border-radius: 4px;
+  overflow: hidden
+}
+
+.track button,
+.track .band {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  border: 0;
+  border-radius: 3px;
+  padding: 2px 5px;
+  text-align: left;
+  overflow: hidden;
+  white-space: nowrap;
+  font-size: 9px;
+  min-width: 2px
+}
+
+.band {
+  pointer-events: none
+}
+
+.track button:hover {
+  filter: brightness(.9)
+}
+
+.track .playhead {
+  position: absolute;
+  height: 100%;
+  width: 1px;
+  background: var(--ink);
+  z-index: 3
+}
+
+.scrub {
+  width: calc(100% - 90px);
+  margin: 3px 0 10px 90px;
+  accent-color: var(--accent);
+  height: 12px
+}
+
+.chapter button {
+  background: var(--soft);
+  color: var(--accent)
+}
+
+.phases .band {
+  color: #202c2b
+}
+
+.section-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 16px 0
+}
+
+.tabs {
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap
+}
+
+.tabs button {
+  font-size: 11px;
+  padding: 5px 11px;
+  border-color: transparent;
+  background: transparent;
+  color: var(--muted)
+}
+
+.tabs button[aria-selected=true] {
+  background: var(--soft);
+  color: var(--accent);
+  font-weight: 650
+}
+
+.edit-head {
+  display: flex;
+  gap: 15px;
+  align-items: center;
+  justify-content: space-between;
+  margin: 14px 0 8px
+}
+
+.edit-track button {
+  background: var(--hot);
+  color: #fff
+}
+
+.edit-track {
+  height: 27px
+}
+
+.workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(320px, 1fr);
+  gap: 20px;
+  margin-top: 22px
+}
+
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 13px 18px;
+  border-bottom: 1px solid var(--border)
+}
+
+input,
+select {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--ink);
+  border-radius: 6px;
+  padding: 7px 9px;
+  min-width: 0
+}
+
+.filters input {
+  flex: 1;
+  min-width: 100px
+}
+
+.filters select {
+  font-size: 11px
+}
+
+.transcript {
+  height: 540px;
+  overflow: auto;
+  scroll-behavior: smooth
+}
+
+.segment {
+  display: grid;
+  grid-template-columns: 57px 1fr;
+  gap: 12px;
+  padding: 17px 20px;
+  border-bottom: 1px solid var(--border);
+  border-left: 3px solid transparent;
+  cursor: pointer;
+  position: relative
+}
+
+.segment.active {
+  border-left-color: var(--hot);
+  box-shadow: inset 0 0 0 1px var(--hot)
+}
+
+.segment:focus-visible {
+  outline: 2px solid var(--hot);
+  outline-offset: -3px
+}
+
+.segment .time {
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+  padding-top: 3px
+}
+
+.segment .speaker {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--accent);
+  margin-bottom: 4px
+}
+
+.segment p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.75
+}
+
+.segment mark {
+  background: #e2bd6f45;
+  color: inherit;
+  box-decoration-break: clone;
+  padding: 1px 0
+}
+
+.chips {
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
+  margin-top: 8px
+}
+
+.chip {
+  font-size: 9px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 1px 5px;
+  color: var(--muted)
+}
+
+.score {
+  float: right;
+  color: var(--hot);
+  font-size: 10px
+}
+
+.clip-list {
+  max-height: 550px;
+  overflow: auto;
+  padding: 8px 18px
+}
+
+.clip-card {
+  padding: 16px 0;
+  border-bottom: 1px solid var(--border)
+}
+
+.clip-card:last-child {
+  border: 0
+}
+
+.clip-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  font-size: 10px;
+  color: var(--muted)
+}
+
+.clip-top .number {
+  background: var(--soft);
+  color: var(--accent);
+  font-weight: 700;
+  padding: 3px 7px;
+  border-radius: 4px
+}
+
+.clip-card h3 {
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.5;
+  margin: 9px 0
+}
+
+.clip-card p {
+  font-size: 11px;
+  color: var(--muted);
+  margin: 7px 0
+}
+
+.clip-card blockquote {
+  border-left: 2px solid var(--border);
+  padding-left: 10px;
+  font-size: 12px;
+  margin: 9px 0;
+  color: var(--muted)
+}
+
+.clip-actions {
+  display: flex;
+  gap: 7px;
+  margin-top: 12px
+}
+
+.clip-actions button {
+  font-size: 10px;
+  padding: 5px 9px
+}
+
+.empty {
+  padding: 28px 18px;
+  color: var(--muted);
+  font-size: 12px
+}
+
+.speakers {
+  padding: 14px 18px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap
+}
+
+.speakers label {
+  font-size: 10px;
+  color: var(--muted)
+}
+
+.speakers input {
+  width: 120px;
+  padding: 4px 6px;
+  margin-left: 5px;
+  font-size: 11px
+}
+
+.risks {
+  margin-top: 22px;
+  padding: 20px 22px
+}
+
+.risk-row {
+  padding-top: 12px;
+  margin-top: 12px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  gap: 16px;
+  font-size: 12px;
+  color: var(--muted)
+}
+
+.risk-row button {
+  font-size: 10px;
+  white-space: nowrap;
+  height: 32px
+}
+
+.footer {
+  font-size: 10px;
+  color: var(--muted);
+  padding-top: 20px;
+  display: flex;
+  justify-content: space-between;
+  gap: 20px
+}
+
+.player-dock {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 10;
+  background: var(--panel);
+  border-top: 1px solid var(--border);
+  box-shadow: 0 -4px 24px #00000008
+}
+
+.dock-inner {
+  max-width: 1400px;
+  margin: auto;
+  padding: 13px 36px;
+  display: grid;
+  grid-template-columns: 210px 1fr 170px;
+  align-items: center;
+  gap: 22px
+}
+
+.now-title {
+  font-size: 12px;
+  font-weight: 650
+}
+
+.now-time {
+  font-size: 10px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums
+}
+
+audio {
+  width: 100%;
+  height: 34px
+}
+
+video {
+  width: 100%;
+  max-height: 200px;
+  background: #111;
+  border-radius: 5px
+}
+
+video:not([src]) {
+  display: none
+}
+
+.pick {
+  display: inline-block;
+  border: 1px solid var(--border);
+  padding: 7px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 11px
+}
+
+.pick input {
+  display: none
+}
+
+#media-status {
+  font-size: 9px;
+  color: var(--muted);
+  line-height: 1.4;
+  margin-top: 4px
+}
+
+.hidden {
+  display: none !important
+}
+
+#toast {
+  position: fixed;
+  right: 25px;
+  bottom: 130px;
+  border: 1px solid var(--border);
+  background: var(--panel);
+  padding: 12px 18px;
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+  z-index: 20;
+  font-size: 12px;
+  max-width: 320px
+}
+
+#moment-list {
+  display: flex;
+  gap: 8px;
+  padding: 10px 0 0;
+  flex-wrap: wrap
+}
+
+#moment-list button {
+  font-size: 10px;
+  background: var(--soft);
+  border: 0;
+  color: var(--accent);
+  padding: 5px 8px
+}
+
+.analysis-note {
+  color: var(--muted);
+  font-size: 10px;
+  margin: 10px 0 0
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0
+}
+
+@media(max-width:900px) {
+  main {
+    padding: 0 18px 190px
+  }
+
+  .hero {
+    gap: 25px
+  }
+
+  .workspace {
+    grid-template-columns: 1fr
+  }
+
+  .dock-inner {
+    padding: 12px 18px;
+    grid-template-columns: 130px 1fr
+  }
+
+  .dock-file {
+    grid-column: 1/-1;
+    display: flex;
+    gap: 10px;
+    align-items: center
+  }
+
+  .brand small {
+    display: none
+  }
+
+  .panel-head {
+    padding: 17px
+  }
+
+  .timeline-body {
+    padding: 14px
+  }
+
+  .chart-wrap,
+  .ruler {
+    margin-left: 65px
+  }
+
+  .lane {
+    grid-template-columns: 55px 1fr
+  }
+
+  .scrub {
+    margin-left: 65px;
+    width: calc(100% - 65px)
+  }
+
+  .chart {
+    height: 180px
+  }
+
+  .transcript {
+    height: 450px
+  }
+}
+
+@media(max-width:580px) {
+  .hero {
+    grid-template-columns: 1fr;
+    gap: 18px;
+    padding-top: 25px
+  }
+
+  .summary {
+    font-size: 13px
+  }
+
+  .stat {
+    padding: 0 10px
+  }
+
+  .stat b {
+    font-size: 21px
+  }
+
+  .topbar {
+    align-items: flex-start
+  }
+
+  .actions {
+    justify-content: flex-end
+  }
+
+  .actions button {
+    font-size: 10px;
+    padding: 6px
+  }
+
+  .brand {
+    font-size: 14px
+  }
+
+  .legend {
+    display: none
+  }
+
+  h2 small {
+    display: none
+  }
+
+  .edit-head {
+    align-items: flex-start;
+    flex-direction: column
+  }
+
+  .footer {
+    flex-direction: column;
+    gap: 4px
+  }
+
+  .dock-inner {
+    grid-template-columns: 85px 1fr;
+    gap: 10px
+  }
+
+  .chart text {
+    font-size: 12px
+  }
+}
+
+@media(prefers-reduced-motion:reduce) {
+  * {
+    scroll-behavior: auto !important
+  }
+}
+  </style>
+ </head>
+ <body>
+  <main>
+   <header class="topbar">
+    <div class="brand">
+     <span aria-hidden="true" class="logo">
+      ≋
+     </span>
+     Schnittplatz
+     <small>
+      INTERVIEW INTELLIGENCE
+     </small>
+    </div>
+    <div class="actions">
+     <button id="export-json">
+      ↓ JSON
+     </button>
+     <button id="export-edl">
+      ↓ EDL
+     </button>
+     <button id="export-srt">
+      ↓ SRT
+     </button>
+     <button aria-label="Farbschema wechseln" id="theme">
+      ◐
+     </button>
+    </div>
+   </header>
+   <section class="hero">
+    <div>
+     <span class="eyebrow">
+      Interview Heatmap &amp; Schnitt-Advisor
+     </span>
+     <h1>
+      Die starken Momente.
+      <br/>
+      <span>
+       Auf einen Blick.
+      </span>
+     </h1>
+     <div class="filename" id="filename">
+     </div>
+     <div style="margin-top:12px">
+      <span class="badge" id="privacy">
+      </span>
+     </div>
+    </div>
+    <div class="summary">
+     <strong>
+      Das Gespräch in drei Sätzen
+     </strong>
+     <div id="summary">
+     </div>
+    </div>
+   </section>
+   <section aria-label="Interview-Kennzahlen" class="stats">
+    <div class="stat">
+     <b id="stat-duration">
+     </b>
+     <span>
+      Aufnahmedauer
+     </span>
+    </div>
+    <div class="stat">
+     <b id="stat-speakers">
+     </b>
+     <span>
+      Sprecher
+     </span>
+    </div>
+    <div class="stat">
+     <b id="stat-moments">
+     </b>
+     <span>
+      Heat Moments
+     </span>
+    </div>
+    <div class="stat">
+     <b id="stat-clips">
+     </b>
+     <span>
+      Social Clips
+     </span>
+    </div>
+   </section>
+   <div class="notice">
+    <b>
+     i
+    </b>
+    <span>
+     Schweizerdeutsch wird durch Whisper näherungsweise ins Hochdeutsche übertragen. Heat, Emotionen und Retention-Risiken sind redaktionelle Hinweise; Aussagen und Schnittkontext bitte prüfen. Lachen wird nicht automatisch klassifiziert.
+    </span>
+   </div>
+   <section class="panel">
+    <div class="panel-head">
+     <h2>
+      Das Interview im Überblick
+      <small>
+       Von leise bis mitreissend
+      </small>
+     </h2>
+     <div class="legend">
+      Ruhig
+      <i>
+      </i>
+      Intensiv
+     </div>
+    </div>
+    <div class="timeline-body">
+     <div class="chart-wrap">
+      <svg aria-label="Heat-Kurve. Zeit mit dem Schieberegler darunter wählen." class="chart" id="chart" preserveaspectratio="none" role="img" viewbox="0 0 1000 210">
+      </svg>
+     </div>
+     <div class="ruler" id="ruler">
+     </div>
+     <label class="visually-hidden" for="scrub">
+      Zeitpunkt im Interview
+     </label>
+     <input class="scrub" id="scrub" min="0" step="0.01" type="range" value="0"/>
+     <div id="speaker-tracks">
+     </div>
+     <div class="lane">
+      <span class="lane-label">
+       Kapitel
+      </span>
+      <div class="track chapter" id="chapters">
+      </div>
+     </div>
+     <div class="section-divider">
+     </div>
+     <div class="lane">
+      <span class="lane-label">
+       Dramaturgie
+      </span>
+      <div class="track phases" id="phases">
+      </div>
+     </div>
+     <div aria-label="Dramaturgische Höhepunkte" id="moment-list">
+     </div>
+     <div class="analysis-note" id="analysis-note">
+     </div>
+     <div class="section-divider">
+     </div>
+     <div class="edit-head">
+      <h2>
+       Schnitt-Ebene
+      </h2>
+      <div aria-label="Schnittversion" class="tabs" id="tabs" role="tablist">
+      </div>
+     </div>
+     <div class="lane">
+      <span class="lane-label" id="cut-label">
+       Hook
+      </span>
+      <div class="track edit-track" id="cut-track">
+      </div>
+     </div>
+    </div>
+   </section>
+   <section class="workspace">
+    <section class="panel">
+     <div class="panel-head">
+      <h2>
+       Transkript
+       <small id="segment-count">
+       </small>
+      </h2>
+      <span class="eyebrow">
+       Klicken &amp; anhören
+      </span>
+     </div>
+     <div class="filters">
+      <label class="visually-hidden" for="search">
+       Transkript durchsuchen
+      </label>
+      <input id="search" placeholder="Im Gespräch suchen …" type="search"/>
+      <label class="visually-hidden" for="speaker-filter">
+       Sprecher filtern
+      </label>
+      <select id="speaker-filter">
+       <option value="">
+        Alle Sprecher
+       </option>
+      </select>
+      <label class="visually-hidden" for="heat-filter">
+       Heat filtern
+      </label>
+      <select id="heat-filter">
+       <option value="0">
+        Alle Momente
+       </option>
+       <option value="0.6">
+        Heat ≥ 6
+       </option>
+       <option value="0.8">
+        Heat ≥ 8
+       </option>
+      </select>
+     </div>
+     <div class="transcript" id="transcript">
+     </div>
+     <div class="speakers" id="speaker-names">
+     </div>
+    </section>
+    <section class="panel">
+     <div class="panel-head">
+      <h2 id="suggestion-title">
+       Dein Cold Open
+      </h2>
+      <span class="badge" id="suggestion-count">
+      </span>
+     </div>
+     <div class="clip-list" id="clip-list">
+     </div>
+    </section>
+   </section>
+   <section class="panel risks">
+    <h2>
+     Retention &amp; redaktionelle Hinweise
+    </h2>
+    <div id="risks">
+    </div>
+   </section>
+   <footer class="footer">
+    <span>
+     SCHNITTPLATZ · Eigenständiger Report · Keine externen Ressourcen
+    </span>
+    <span id="provenance">
+    </span>
+   </footer>
+  </main>
+  <div class="player-dock">
+   <div class="dock-inner">
+    <div>
+     <div class="now-title" id="now-title">
+      Interview vorhören
+     </div>
+     <div class="now-time" id="now-time">
+      00:00 / 00:00
+     </div>
+    </div>
+    <div id="player-slot">
+    </div>
+    <div class="dock-file">
+     <label class="pick">
+      ▸ Medium wählen
+      <input accept="audio/*,video/*" id="media-picker" type="file"/>
+     </label>
+     <div id="media-status" role="status">
+      Dateien neben dem Report werden lokal geladen.
+     </div>
+    </div>
+   </div>
+  </div>
+  <div class="hidden" id="toast" role="status">
+  </div>
+  <script id="report-data" type="application/json">
+   __REPORT_DATA__
+  </script>
+  <script>
+   'use strict';
+const D = JSON.parse(document.getElementById('report-data').textContent),
+  M = D.metadata,
+  S = D.scored.segments,
+  duration = M.duration;
+const $ = id => document.getElementById(id),
+  el = (tag, cls, text) => {
+    const e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (text !== undefined) e.textContent = text;
+    return e
+  },
+  ns = 'http://www.w3.org/2000/svg';
+const svg = (tag, attrs = {}) => {
+  const e = document.createElementNS(ns, tag);
+  for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, v);
+  return e
+};
+const fmt = t => {
+  t = Math.floor(Math.max(0, t));
+  return (t >= 3600 ? String(Math.floor(t / 3600)).padStart(2, '0') + ':' : '') + String(Math.floor(t / 60) % 60).padStart(2, '0') + ':' + String(t % 60).padStart(2, '0')
+};
+const speakers = [...new Set(S.map(s => s.speaker))],
+  key = 'heatmap:' + M.sha256;
+let names = {},
+  theme = 'light',
+  currentTab = 'hook',
+  stopAt = null,
+  player, objectUrl = null,
+  currentSegment = null;
+try {
+  names = JSON.parse(localStorage.getItem(key + ':names') || '{}');
+  theme = localStorage.getItem('heatmap:theme') || 'light'
+} catch {}
+const speakerName = id => names[id] || id;
+document.documentElement.dataset.theme = theme;
+$('theme').onclick = () => {
+  theme = theme === 'light' ? 'dark' : 'light';
+  document.documentElement.dataset.theme = theme;
+  try {
+    localStorage.setItem('heatmap:theme', theme)
+  } catch {}
+};
+
+function toast(text) {
+  $('toast').textContent = text;
+  $('toast').classList.remove('hidden');
+  clearTimeout(toast.timer);
+  toast.timer = setTimeout(() => $('toast').classList.add('hidden'), 4500)
+}
+
+function download(name, text, type = 'text/plain;charset=utf-8') {
+  const url = URL.createObjectURL(new Blob([text], {
+    type
+  }));
+  const a = el('a');
+  a.href = url;
+  a.download = name;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000)
+}
+$('export-json').onclick = () => download('report.json', JSON.stringify({
+  ...D,
+  speaker_names: names
+}, null, 2), 'application/json');
+$('export-edl').onclick = () => {
+  const name = currentTab === 'hook' ? 'hook.edl' : currentTab === 'clips' ? 'clips.edl' : currentTab.startsWith('short-') ? currentTab + '.edl' : 'cuts.edl';
+  download(name, D.exports[name] || D.exports['cuts.edl'])
+};
+$('export-srt').onclick = () => download('transcript.srt', D.exports['transcript.srt']);
+$('filename').textContent = M.filename;
+document.title = M.filename + ' · Schnittplatz';
+$('summary').textContent = D.analysis.summary;
+$('privacy').textContent = M.audio_remote ? 'Remote-Transkription' : M.text_remote ? 'Audio lokal · Text via Claude' : 'Lokal analysiert';
+$('stat-duration').textContent = fmt(duration);
+$('stat-speakers').textContent = speakers.length;
+$('stat-moments').textContent = D.scored.peaks.length;
+$('stat-clips').textContent = D.cuts.clips.length;
+$('segment-count').textContent = S.length + ' Segmente';
+$('analysis-note').textContent = D.analysis.mode === 'claude' ? 'Inhalt & Dramaturgie: Claude · ' + D.analysis.model : 'Offline-Modus: Schlüsselwort-Heuristik. Phasen sind ein Strukturvorschlag; keine semantische LLM-Analyse.';
+$('provenance').textContent = 'Wort-Zeitstempel · ' + D.cuts.fps + ' fps EDL · ' + (M.diarization === 'imported_turns' ? 'Sprecher importiert' : M.diarization === 'single_speaker_explicit' ? 'Eine Stimme vorgegeben' : 'pyannote lokal');
+
+function setPlayer(type, src) {
+  if (player) player.pause();
+  player = el(type);
+  player.controls = true;
+  player.preload = 'metadata';
+  player.src = src;
+  player.setAttribute('aria-label', 'Interview abspielen');
+  $('player-slot').replaceChildren(player);
+  player.addEventListener('timeupdate', () => {
+    if (stopAt !== null && player.currentTime >= stopAt) {
+      player.pause();
+      player.currentTime = stopAt;
+      stopAt = null
+    }
+    updateCursor(player.currentTime, false)
+  });
+  player.addEventListener('error', () => {
+    if (type === 'video' && src !== './audio.wav') {
+      setPlayer('audio', './audio.wav');
+      $('media-status').textContent = 'Video fehlt oder Codec nicht unterstützt; lokale Audiospur verwenden.'
+    } else {
+      $('media-status').textContent = 'Medium wählen oder audio.wav neben den Report legen. Die Analyse ist vollständig eingebettet.'
+    }
+  })
+}
+setPlayer(M.media_type, './' + encodeURIComponent(M.media_type === 'audio' ? (M.audio_file || 'audio.wav') : M.media_file));
+$('media-picker').onchange = e => {
+  const file = e.target.files[0];
+  if (!file) return;
+  if (objectUrl) URL.revokeObjectURL(objectUrl);
+  objectUrl = URL.createObjectURL(file);
+  stopAt = null;
+  setPlayer(file.type.startsWith('video/') ? 'video' : 'audio', objectUrl);
+  $('media-status').textContent = 'Lokal ausgewählt: ' + file.name
+};
+
+function seek(time, end = null, play = false, label = 'Interview vorhören') {
+  const t = Math.min(duration, Math.max(0, time));
+  stopAt = end;
+  try {
+    player.currentTime = t
+  } catch {}
+  $('now-title').textContent = label;
+  updateCursor(t, true);
+  if (play) player.play().catch(() => toast('Bitte ein lokales Medium auswählen oder die Wiedergabe im Player starten.'))
+}
+
+function updateCursor(t, scroll) {
+  $('scrub').value = t;
+  $('now-time').textContent = fmt(t) + ' / ' + fmt(duration);
+  const cursor = $('chart-cursor');
+  if (cursor) {
+    cursor.setAttribute('x1', t / duration * 1000);
+    cursor.setAttribute('x2', t / duration * 1000)
+  }
+  for (const p of document.querySelectorAll('.playhead')) p.style.left = (t / duration * 100) + '%';
+  const s = S.find(s => s.start <= t && s.end >= t) || (scroll ? S.reduce((a, b) => Math.abs((a.start + a.end) / 2 - t) < Math.abs((b.start + b.end) / 2 - t) ? a : b) : null);
+  if (s && s.id !== currentSegment) {
+    document.querySelector('.segment.active')?.classList.remove('active');
+    const row = $('seg-' + s.id);
+    if (row) {
+      row.classList.add('active');
+      if (scroll) row.scrollIntoView({
+        block: 'nearest',
+        behavior: 'smooth'
+      })
+    }
+    currentSegment = s.id
+  } else if (s && scroll) {
+    $('seg-' + s.id)?.scrollIntoView({
+      block: 'nearest',
+      behavior: 'smooth'
+    })
+  }
+}
+$('scrub').max = duration;
+$('scrub').addEventListener('input', e => seek(Number(e.target.value)));
+
+function drawChart() {
+  const chart = $('chart');
+  const defs = svg('defs'),
+    grad = svg('linearGradient', {
+      id: 'heat-grad',
+      x1: '0',
+      x2: '0',
+      y1: '1',
+      y2: '0'
+    });
+  for (const [offset, color] of [
+      ['0%', '#9abeb7'],
+      ['55%', '#d4bb78'],
+      ['100%', '#de7451']
+    ]) grad.append(svg('stop', {
+    offset,
+    'stop-color': color
+  }));
+  defs.append(grad);
+  chart.append(defs);
+  for (let i = 0; i <= 4; i++) {
+    const y = 190 - i * 40;
+    chart.append(svg('line', {
+      x1: 0,
+      x2: 1000,
+      y1: y,
+      y2: y,
+      class: 'grid'
+    }));
+    const text = svg('text', {
+      x: -18,
+      y: y + 3,
+      'text-anchor': 'end'
+    });
+    text.textContent = (i * 2.5).toFixed(i % 2 ? 1 : 0);
+    chart.append(text)
+  }
+  const points = D.scored.curve.map(p => [p.time / duration * 1000, 190 - p.heat * 160]);
+  if (points.length) {
+    points.push([1000, points[points.length - 1][1]]);
+    const line = 'M' + points.map(p => p.join(',')).join(' L');
+    chart.append(svg('path', {
+      d: line + ' L1000,190 L0,190 Z',
+      fill: 'url(#heat-grad)',
+      opacity: '.65'
+    }));
+    chart.append(svg('path', {
+      d: line,
+      class: 'line'
+    }))
+  }
+  for (const [i, p] of D.scored.peaks.entries()) {
+    const x = p.time / duration * 1000,
+      y = 190 - p.score * 160;
+    const g = svg('g');
+    g.append(svg('line', {
+      x1: x,
+      x2: x,
+      y1: y - 7,
+      y2: 20,
+      stroke: 'var(--hot)',
+      'stroke-dasharray': '2 4',
+      opacity: '.5'
+    }));
+    g.append(svg('circle', {
+      cx: x,
+      cy: y,
+      r: 4,
+      fill: 'var(--hot)',
+      stroke: 'var(--panel)',
+      'stroke-width': 2
+    }));
+    const text = svg('text', {
+      x,
+      y: 14,
+      'text-anchor': 'middle'
+    });
+    text.textContent = String(i + 1).padStart(2, '0');
+    g.append(text);
+    const title = svg('title');
+    title.textContent = fmt(p.time) + ' · ' + p.label;
+    g.append(title);
+    chart.append(g)
+  }
+  chart.append(svg('line', {
+    id: 'chart-cursor',
+    x1: 0,
+    x2: 0,
+    y1: 25,
+    y2: 195,
+    class: 'cursor'
+  }));
+  chart.onclick = e => {
+    const box = chart.getBoundingClientRect();
+    seek((e.clientX - box.left) / box.width * duration)
+  };
+  for (let i = 0; i <= 6; i++) {
+    const tick = el('span', '', fmt(i * duration / 6));
+    tick.style.left = (i / 6 * 100) + '%';
+    $('ruler').append(tick)
+  }
+}
+
+function band(track, start, end, label, color, action) {
+  const b = el(action ? 'button' : 'span', action ? '' : 'band', label);
+  b.style.left = (start / duration * 100) + '%';
+  b.style.width = (Math.max(0, end - start) / duration * 100) + '%';
+  if (color) b.style.background = color;
+  b.title = label + ' · ' + fmt(start) + ' – ' + fmt(end);
+  if (action) {
+    b.onclick = action;
+    b.setAttribute('aria-label', b.title)
+  }
+  track.append(b);
+  return b
+}
+const speakerColors = ['#6f9d92', '#afa1c3', '#b5a578', '#87a8bf', '#c69192'];
+
+function drawTracks() {
+  const root = $('speaker-tracks');
+  root.replaceChildren();
+  for (const [id, i] of speakers.map((s, i) => [s, i])) {
+    const lane = el('div', 'lane'),
+      label = el('span', 'lane-label', speakerName(id)),
+      track = el('div', 'track');
+    for (const s of S.filter(s => s.speaker === id)) band(track, s.start, s.end, '', speakerColors[i % speakerColors.length], () => seek(s.start));
+    lane.append(label, track);
+    root.append(lane)
+  }
+  $('chapters').replaceChildren();
+  for (const c of D.analysis.chapters) band($('chapters'), c.start, c.end, c.title, null, () => seek(c.start));
+  $('phases').replaceChildren();
+  const colors = {
+    Exposition: '#c6d9d0',
+    Steigerung: '#ddd3ae',
+    'Höhepunkt': '#eeb49a',
+    Wendepunkt: '#cbbce0',
+    'Auflösung': '#acc9d7'
+  };
+  for (const p of D.analysis.phases) band($('phases'), p.start, p.end, p.phase, colors[p.phase]);
+  $('moment-list').replaceChildren();
+  for (const [i, h] of D.analysis.highlights.entries()) {
+    const b = el('button', '', (i + 1) + ' · ' + h.title + '  ' + fmt(h.start));
+    b.title = h.reason;
+    b.onclick = () => seek(h.start);
+    $('moment-list').append(b)
+  }
+}
+
+function renderNames() {
+  const box = $('speaker-names'),
+    filter = $('speaker-filter'),
+    selected = filter.value;
+  box.replaceChildren();
+  filter.replaceChildren(el('option', '', 'Alle Sprecher'));
+  filter.firstChild.value = '';
+  for (const id of speakers) {
+    const label = el('label', '', id),
+      input = el('input');
+    input.value = speakerName(id);
+    input.maxLength = 50;
+    input.setAttribute('aria-label', 'Name für ' + id);
+    input.onchange = () => {
+      names[id] = input.value.trim() || id;
+      try {
+        localStorage.setItem(key + ':names', JSON.stringify(names))
+      } catch {}
+      drawTracks();
+      renderTranscript();
+      renderNames()
+    };
+    label.append(input);
+    box.append(label);
+    const option = el('option', '', speakerName(id));
+    option.value = id;
+    filter.append(option)
+  }
+  filter.value = selected
+}
+
+function renderTranscript() {
+  const root = $('transcript'),
+    query = $('search').value.toLocaleLowerCase(),
+    filter = $('speaker-filter').value,
+    minimum = Number($('heat-filter').value);
+  root.replaceChildren();
+  let visible = 0;
+  for (const s of S) {
+    if (query && !s.text.toLocaleLowerCase().includes(query) || filter && s.speaker !== filter || s.heat_final < minimum) continue;
+    visible++;
+    const row = el('article', 'segment');
+    row.id = 'seg-' + s.id;
+    row.tabIndex = 0;
+    row.setAttribute('role', 'button');
+    row.setAttribute('aria-label', fmt(s.start) + ' ' + speakerName(s.speaker) + ': ' + s.text);
+    row.style.background = 'color-mix(in srgb, var(--hot) ' + Math.round(s.heat_final * 10) + '%, var(--panel))';
+    const time = el('span', 'time', fmt(s.start)),
+      content = el('div'),
+      head = el('div', 'speaker', speakerName(s.speaker)),
+      score = el('span', 'score', (s.heat_final * 10).toFixed(1));
+    head.append(score);
+    const text = el('p');
+    if (s.quote && s.quotable && s.text.includes(s.quote)) {
+      const index = s.text.indexOf(s.quote);
+      text.append(document.createTextNode(s.text.slice(0, index)), el('mark', '', s.quote), document.createTextNode(s.text.slice(index + s.quote.length)))
+    } else text.textContent = s.text;
+    content.append(head, text);
+    const chips = el('div', 'chips');
+    for (const tag of s.tags) chips.append(el('span', 'chip', tag));
+    if (s.emotion !== 'neutral') chips.append(el('span', 'chip', s.emotion));
+    content.append(chips);
+    row.append(time, content);
+    const activate = () => seek(s.start, null, true, speakerName(s.speaker));
+    row.onclick = activate;
+    row.onkeydown = e => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        activate()
+      }
+    };
+    root.append(row)
+  }
+  if (!visible) root.append(el('div', 'empty', 'Keine passenden Segmente. Suchbegriff oder Filter ändern.'));
+  currentSegment = null;
+  updateCursor(Number($('scrub').value), false)
+}
+for (const id of ['search', 'speaker-filter', 'heat-filter']) $(id).addEventListener(id === 'search' ? 'input' : 'change', renderTranscript);
+const tabDefs = [
+  ['hook', 'Hook', 'Dein Cold Open'],
+  ['clips', 'Clips', 'Social Clips'], ...Object.keys(D.cuts.short_versions).map(k => ['short-' + k, k + ' Min', k + '-Minuten-Version']), ['reductions', 'Kürzen', 'Kürzungskandidaten']
+];
+
+function selectedCuts() {
+  return currentTab === 'hook' ? (D.cuts.hook ? [D.cuts.hook] : []) : currentTab === 'clips' ? D.cuts.clips : currentTab === 'reductions' ? D.cuts.reductions : D.cuts.short_versions[currentTab.slice(6)]?.cuts || []
+}
+
+function cutSrt(cut) {
+  let i = 0;
+  const stamp = t => {
+    const ms = Math.round(t * 1000);
+    return String(Math.floor(ms / 3600000)).padStart(2, '0') + ':' + String(Math.floor(ms / 60000) % 60).padStart(2, '0') + ':' + String(Math.floor(ms / 1000) % 60).padStart(2, '0') + ',' + String(ms % 1000).padStart(3, '0')
+  };
+  return S.map(s => {
+    const words = s.words.filter(w => w.start >= cut.start && w.end <= cut.end);
+    return words.length ? ++i + '\n' + stamp(words[0].start - cut.start) + ' --> ' + stamp(words[words.length - 1].end - cut.start) + '\n' + words.map(w => w.word).join(' ') + '\n' : ''
+  }).filter(Boolean).join('\n')
+}
+
+function renderCuts() {
+  const selections = selectedCuts(),
+    definition = tabDefs.find(t => t[0] === currentTab);
+  $('suggestion-title').textContent = definition[2];
+  $('cut-label').textContent = definition[1];
+  $('suggestion-count').textContent = selections.length + ' Vorschläge';
+  for (const b of $('tabs').children) b.setAttribute('aria-selected', String(b.dataset.tab === currentTab));
+  $('cut-track').replaceChildren();
+  $('clip-list').replaceChildren();
+  if (currentTab.startsWith('short-')) {
+    const version = D.cuts.short_versions[currentTab.slice(6)];
+    $('clip-list').append(el('div', 'analysis-note', 'Auswahldauer ' + fmt(version.duration) + ' / Ziel ' + fmt(version.target_seconds) + (version.under_target ? ' · Kürzer: Satzgrenzen und verfügbares Material haben Vorrang.' : '')))
+  }
+  for (const [i, cut] of selections.entries()) {
+    band($('cut-track'), cut.start, cut.end, String(i + 1), null, () => seek(cut.start, cut.end, true, cut.title));
+    const card = el('article', 'clip-card'),
+      top = el('div', 'clip-top');
+    top.append(el('span', 'number', String(i + 1).padStart(2, '0')), el('span', '', fmt(cut.start) + ' – ' + fmt(cut.end) + ' · ' + Math.round(cut.duration) + ' s'));
+    card.append(top, el('h3', '', cut.title));
+    card.append(el('p', '', cut.reason));
+    if (cut.subtitle_text) card.append(el('blockquote', '', cut.subtitle_text));
+    const actions = el('div', 'clip-actions'),
+      play = el('button', 'primary', '▶ Vorhören'),
+      jump = el('button', '', 'Zum Transkript'),
+      srt = el('button', '', '↓ Untertitel');
+    play.onclick = () => seek(cut.start, cut.end, true, cut.title);
+    jump.onclick = () => {
+      const first = S.find(s => cut.segment_ids.includes(s.id));
+      if (first) {
+        $('search').value = '';
+        $('speaker-filter').value = '';
+        $('heat-filter').value = '0';
+        renderTranscript();
+        seek(first.start)
+      }
+    };
+    srt.onclick = () => download(cut.id + '.srt', cutSrt(cut));
+    actions.append(play, jump, srt);
+    card.append(actions);
+    $('clip-list').append(card)
+  }
+  if (!selections.length) $('clip-list').append(el('div', 'empty', 'Keine geeignete Passage mit vollständigen Sätzen und passender Dauer gefunden.'));
+  const head = el('span', 'playhead');
+  head.style.left = Number($('scrub').value) / duration * 100 + '%';
+  $('cut-track').append(head)
+}
+for (const [id, label] of tabDefs) {
+  const b = el('button', '', label);
+  b.dataset.tab = id;
+  b.setAttribute('role', 'tab');
+  b.onclick = () => {
+    currentTab = id;
+    renderCuts()
+  };
+  $('tabs').append(b)
+}
+
+function renderRisks() {
+  const root = $('risks');
+  for (const risk of D.cuts.retention_risks) {
+    const row = el('div', 'risk-row'),
+      b = el('button', '', fmt(risk.start) + ' – ' + fmt(risk.end));
+    b.onclick = () => seek(risk.start);
+    row.append(b, el('span', '', risk.reason + ' ' + risk.suggestion));
+    root.append(row)
+  }
+  for (const warning of D.cuts.warnings) root.append(el('div', 'risk-row', warning));
+  if (!root.children.length) root.append(el('p', 'analysis-note', 'Keine durchgehende Phase unter der eingestellten Retention-Schwelle gefunden. Das ist keine Prognose tatsächlicher Zuschauerbindung.'));
+  root.append(el('p', 'analysis-note', 'EDL: non-drop-frame, Source-Start ' + (M.edl_source_timecode || '00:00:00:00') + '. Frame-Rundung kann Nachbarwörter vollständig einschliessen. Dateiname und Source-Timecode im Schnittprogramm abgleichen.'))
+}
+drawChart();
+drawTracks();
+renderNames();
+renderTranscript();
+renderCuts();
+renderRisks();
+  </script>
+ </body>
+</html>

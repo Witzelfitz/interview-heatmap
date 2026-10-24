@@ -1286,7 +1286,7 @@ $('stat-moments').textContent = D.scored.peaks.length;
 $('stat-clips').textContent = D.cuts.clips.length;
 $('segment-count').textContent = S.length + ' Segmente';
 $('analysis-note').textContent = D.analysis.mode === 'ollama' ? 'Inhalt & Dramaturgie: Ollama lokal · ' + D.analysis.model : D.analysis.mode === 'claude' ? 'Inhalt & Dramaturgie: Claude · ' + D.analysis.model : 'Offline-Modus: Schlüsselwort-Heuristik. Phasen sind ein Strukturvorschlag; keine semantische LLM-Analyse.';
-$('provenance').textContent = 'Wort-Zeitstempel · ' + D.cuts.fps + ' fps EDL · ' + (M.diarization === 'imported_turns' ? 'Sprecher importiert' : M.diarization === 'single_speaker_explicit' ? 'Eine Stimme vorgegeben' : 'pyannote lokal');
+$('provenance').textContent = 'Wort-Zeitstempel · ' + D.cuts.fps + ' fps EDL · ' + (M.diarization === 'noscribe_local' ? 'Sprecher lokal · noScribe-Modelle' : M.diarization === 'imported_turns' ? 'Sprecher importiert' : M.diarization === 'single_speaker_explicit' ? 'Eine Stimme vorgegeben' : 'pyannote lokal');
 
 function setPlayer(type, src) {
   if (player) player.pause();

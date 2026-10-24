@@ -53,7 +53,7 @@ def parser():
         "--diarization-file", type=Path, help="Vorhandene echte Sprecherbereiche als JSON importieren"
     )
     p.add_argument("--speakers", type=int, help="Bekannte Anzahl Stimmen für pyannote")
-    p.add_argument("--diarization-model", help="Lokaler community-1-Modellpfad für Offline-Betrieb")
+    p.add_argument("--diarization-model", help="noscribe (ohne Konto) oder lokales Modellverzeichnis")
     p.add_argument(
         "--skip-transcribe", action="store_true", help="Passenden Transkript-Cache zwingend wiederverwenden"
     )
@@ -162,6 +162,10 @@ def main(argv=None):
         ):
             if flag:
                 options[key] = flag
+        if options["diarization_model"] == "noscribe":
+            from pipeline.models import REVISION
+
+            options["diarization_revision"] = REVISION
         log.info("1/7 Audio vorbereiten: %s", source.name)
         wav, metadata = prepare(source, out)
         transcription_key = digest(
@@ -221,6 +225,7 @@ def main(argv=None):
                     {
                         "source": metadata["sha256"],
                         "model": options["diarization_model"],
+                        "revision": options.get("diarization_revision"),
                         "speakers": args.speakers,
                         "file": file_hash(args.diarization_file) if args.diarization_file else None,
                     }
@@ -228,9 +233,17 @@ def main(argv=None):
                 turns = cached(
                     cache / f"diarization-{turn_key}.json",
                     turn_key,
-                    lambda: diarize(wav, options["diarization_model"], args.speakers, args.diarization_file),
+                    lambda: diarize(
+                        wav, options["diarization_model"], args.speakers, args.diarization_file, args.offline
+                    ),
                 )
-                diarization_mode = "imported_turns" if args.diarization_file else "pyannote_local"
+                diarization_mode = (
+                    "imported_turns"
+                    if args.diarization_file
+                    else "noscribe_local"
+                    if options["diarization_model"] == "noscribe"
+                    else "pyannote_local"
+                )
             transcript = {
                 "transcription_key": transcription_key,
                 "metadata": metadata,

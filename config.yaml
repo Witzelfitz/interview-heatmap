@@ -2,7 +2,7 @@ transcription:
   model: auto # large-v3 mit CUDA und genug Speicher, sonst medium
   device: auto
   compute_type: auto
-  diarization_model: pyannote/speaker-diarization-community-1
+  diarization_model: noscribe # öffentlicher Modell-Download ohne Konto/Token, danach lokal
 analysis:
   model: claude-sonnet-4-6
   ollama_url: http://127.0.0.1:11434

@@ -14,12 +14,13 @@ from server import Jobs, LocalServer
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Echter Browser-Uploadtest mit einer Ein-Stimmen-Testaufnahme"
+        description="Echter Browser-Uploadtest mit lokaler Sprechererkennung und Ollama"
     )
     parser.add_argument(
-        "media", type=Path, help="Tatsächliche Ein-Stimmen-Aufnahme, keine Mehrsprecher-Datei"
+        "media", type=Path, help="Testaufnahme; --speakers single nur für echte Ein-Stimmen-Aufnahmen"
     )
     parser.add_argument("--out", type=Path, default=Path("test-output/upload-browser"))
+    parser.add_argument("--speakers", choices=["single", "auto"], default="auto")
     parser.add_argument("--llm", choices=["local", "ollama"], default="ollama")
     args = parser.parse_args()
     jobs = Jobs(args.out, ROOT / "config.yaml")
@@ -43,13 +44,11 @@ def main():
             )
             page.goto(base)
             page.wait_for_function("capabilities !== null")
+            page.locator("#settings > summary").click()
             page.locator("#llm").select_option(args.llm)
             page.locator("#file").set_input_files(str(args.media.resolve()))
-            if not jobs.capabilities()["hf_token"]:
-                page.get_by_role("button", name="Interview hochladen & analysieren").click()
-                assert "Hugging-Face" in page.locator("#form-error").inner_text()
-                assert not jobs.records
-            page.locator("#speaker-mode").select_option("single")
+            assert page.locator("#hf-token").count() == 0
+            page.locator("#speaker-mode").select_option(args.speakers)
             page.locator("#model").select_option("tiny")
             page.screenshot(path=str(args.out / "upload-light.png"), full_page=True)
             page.get_by_role("button", name="Farbschema wechseln").click()
@@ -68,7 +67,9 @@ def main():
             folder = jobs.directory / job_id
             output = folder / "output"
             data = json.loads((output / "report.json").read_text())
-            assert data["metadata"]["diarization"] == "single_speaker_explicit"
+            assert data["metadata"]["diarization"] == (
+                "noscribe_local" if args.speakers == "auto" else "single_speaker_explicit"
+            )
             assert not data["metadata"]["audio_remote"] and not data["metadata"]["text_remote"]
             assert data["analysis"]["mode"] == ("ollama" if args.llm == "ollama" else "local_heuristic")
             for step in range(1, 8):
@@ -95,6 +96,7 @@ def main():
             assert page.get_by_role("link", name="Report öffnen →", exact=True).count() >= 1
             # Ungültige Aufnahme muss als Fehler erscheinen, nie als fertiger Report.
             page.locator("#speaker-mode").select_option("single")
+            page.locator("#settings > summary").click()
             page.locator("#model").select_option("tiny")
             page.locator("#file").set_input_files(
                 {"name": "kaputt.wav", "mimeType": "audio/wav", "buffer": b"not an audio file"}

@@ -20,6 +20,7 @@ from urllib.parse import parse_qs, unquote, urlsplit
 
 from heatmap import ROOT, load_config
 from pipeline.common import write_json
+from pipeline.models import models_ready
 from pipeline.ollama import Ollama
 
 MEDIA_EXTENSIONS = {
@@ -38,7 +39,6 @@ MEDIA_EXTENSIONS = {
     ".aif",
 }
 SECRET_HEADERS = {
-    "HF_TOKEN": "X-HF-Token",
     "ANTHROPIC_API_KEY": "X-Anthropic-Key",
     "OPENAI_API_KEY": "X-OpenAI-Key",
 }
@@ -96,8 +96,9 @@ class Jobs:
         return {
             "ffmpeg": bool(shutil.which("ffmpeg") and shutil.which("ffprobe")),
             "diarization": module_available("pyannote.audio"),
-            "hf_token": bool(os.environ.get("HF_TOKEN")),
-            "local_diarization_model": Path(model).is_dir(),
+            "local_diarization_model": model == "noscribe" or Path(model).is_dir(),
+            "diarization_models_ready": models_ready() if model == "noscribe" else Path(model).is_dir(),
+            "diarization_backend": "noscribe" if model == "noscribe" else "local",
             "claude": module_available("anthropic"),
             "anthropic_key": bool(os.environ.get("ANTHROPIC_API_KEY")),
             "remote": module_available("openai"),
@@ -150,9 +151,9 @@ class Jobs:
         if options["speaker_mode"] == "auto":
             if not cap["diarization"]:
                 raise ValueError("Automatische Sprechererkennung benötigt pip install '.[diarization]'.")
-            if not (credentials["HF_TOKEN"] or cap["hf_token"] or cap["local_diarization_model"]):
+            if not cap["local_diarization_model"]:
                 raise ValueError(
-                    "Für automatische Sprechererkennung einen freigeschalteten Hugging-Face-Token in den Einstellungen eingeben. Für eine echte Ein-Stimmen-Aufnahme kannst du «Eine Stimme» wählen."
+                    "Für die Sprechererkennung in config.yaml diarization_model: noscribe oder ein lokales Modellverzeichnis einstellen."
                 )
         if options["llm"] == "claude" and (
             not cap["claude"] or not (credentials["ANTHROPIC_API_KEY"] or cap["anthropic_key"])

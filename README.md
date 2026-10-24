@@ -29,13 +29,9 @@ ollama pull gpt-oss:20b
 
 Bereits installierte lokale Chat-Modelle stehen in der Upload-App zur Auswahl. Das Projekt lädt keine Ollama-Modelle automatisch herunter. `gpt-oss:20b` ist ein Open-Weight-Modell unter Apache 2.0 und wurde hier auf einem Laptop mit 36 GiB RAM geprüft. Ein kleineres lokales Chat-Modell kann über die Oberfläche oder `--ollama-model` gewählt werden; dessen eigene Lizenzbedingungen gelten. Modellqualität, Geschwindigkeit und Speicherbedarf unterscheiden sich.
 
-Für die lokale Sprechererkennung:
+Die Sprechererkennung arbeitet wie bei noScribe mit lokal vorhandenen Modellgewichten. **Keine Anmeldung, kein Hugging-Face-Token und keine manuelle Freischaltung nötig.** Beim ersten Lauf lädt die Anwendung rund 33 MB öffentlich von der offiziellen noScribe-Distribution bei GitHub. Die Modelle werden unter `~/.cache/interview-heatmap/` gespeichert, an eine feste Revision gebunden und vor der Nutzung per SHA-256 geprüft. Es wird kein noScribe-Programmcode kopiert; noScribe muss nicht installiert sein.
 
-1. Die Modellbedingungen von [pyannote community-1](https://huggingface.co/pyannote/speaker-diarization-community-1) selbst akzeptieren.
-2. Einen Hugging-Face-Token mit Leserechten für das Modell erstellen.
-3. `HF_TOKEN` in der lokalen Shell setzen. Keine Schlüssel ins Repository schreiben.
-
-Das erste Ausführen lädt Whisper- und pyannote-Modellgewichte herunter. Dabei wird **kein Audio hochgeladen**. Danach sind lokale Modellpfade und `--offline` möglich. Die Modellbedingungen und Attribution von pyannote gelten zusätzlich zum Projektcode.
+Whisper lädt seine Modellgewichte ebenfalls beim ersten Lauf. Dabei werden **keine Interviewdaten hochgeladen**. Danach ist `--offline` möglich. Der erste Start benötigt eine Internetverbindung für die Modelldownloads; beschädigte oder unvollständige Downloads werden verworfen. Optional lässt sich das Cache-Verzeichnis mit `INTERVIEW_HEATMAP_MODEL_DIR` ändern. Attributionen und eigene Modelllizenzen stehen in [Drittkomponenten](THIRD_PARTY_NOTICES.md).
 
 ## Interview im Browser hochladen
 
@@ -48,7 +44,7 @@ python server.py --port 8767
 
 Die Browser-Oberfläche braucht diesen lokalen Python-Server. Der erzeugte Report bleibt eine eigenständige HTML-Datei ohne Serverbedarf. **«Medium wählen» im fertigen Report** ersetzt weiterhin nur die Wiedergabedatei; eine neue Analyse startest du über **«+ Neues Interview»**.
 
-- Automatische Sprechererkennung ist voreingestellt. Falls `HF_TOKEN` nicht in der Serverumgebung gesetzt ist, den freigeschalteten Hugging-Face-Token im geschützten Feld unter **Analyse-Einstellungen & Zugangsdaten** eingeben. Fehlende Voraussetzungen werden vor dem eigentlichen Upload angezeigt. **«Genau eine Stimme»** ist ausschliesslich für entsprechende Aufnahmen gedacht.
+- Automatische Sprechererkennung ist voreingestellt und benötigt kein Konto oder Token. Fehlende Modellgewichte werden automatisch geladen; die Erkennung findet lokal statt. **«Genau eine Stimme»** ist ausschliesslich für entsprechende Aufnahmen gedacht.
 - **Ollama ist voreingestellt** und erstellt inhaltliche Zusammenfassung, Kapitel, Dramaturgie und Schnittvorschläge lokal. Dafür sind keine OpenAI-/Anthropic-Schlüssel nötig. Die einfachere Heuristik ist separat auswählbar. Claude bleibt ein ausdrücklich zu aktivierender Cloud-Modus; dabei wird Text an Anthropic gesendet.
 - Die zusätzliche Checkbox für Remote-Whisper sendet Audio nur bei ausdrücklicher Auswahl an OpenAI. Zugangsdaten werden ausschliesslich im Arbeitsspeicher verarbeitet und aus gespeicherten Prozesslogs entfernt; sie stehen weder in Auftrags-JSON noch URLs oder Browser-Speicher.
 - Uploads werden in Blöcken geschrieben, maximal 20 GiB pro Datei. Pro Aufnahme gibt es `output/uploads/<Auftrags-ID>/input/`, `output/`, `job.json` und `pipeline.log`. Originale werden nicht in öffentliche Repositories übertragen. Mehrere Aufträge werden nacheinander verarbeitet.
@@ -142,7 +138,7 @@ python heatmap.py interview.mp4 --out output --offline \
   --diarization-model /pfad/zu/pyannote-community-1
 ```
 
-`--offline` erlaubt weiterhin lokales Ollama auf Loopback, lehnt aber `--remote` und `--llm claude` ab und aktiviert den Offline-Modus von Hugging Face. pyannote-Telemetrie und Hugging-Face-Telemetrie sind immer deaktiviert. Ein Offline-Lauf benötigt sämtliche Modellgewichte bereits lokal; ein Token ersetzt diese Gewichte nicht.
+`--offline` erlaubt weiterhin lokales Ollama auf Loopback, lehnt aber `--remote` und `--llm claude` ab und aktiviert den Offline-Modus von Hugging Face. pyannote-Telemetrie und Hugging-Face-Telemetrie sind immer deaktiviert. Ein Offline-Lauf benötigt sämtliche Modellgewichte bereits lokal; fehlende Sprechergewichte können einmal durch einen Lauf ohne `--offline` nachgeladen werden.
 
 SHA-256 der Quelle, Sprache, Modell, Device, Präzision und Sprecheroptionen bestimmen den Transkript-Cache. Bei einem abweichenden Fingerprint bricht `--skip-transcribe` ab. Audio-Merkmale, einzelne LLM-Fenster und der Gesamtpass werden separat gecacht. Änderungen an Heat-Gewichten benötigen keine neue Transkription. Cache-Dateien werden atomar geschrieben. Zum gezielten Wiederholen einer Analyse die passende Datei in `output/cache/` entfernen.
 
@@ -212,8 +208,8 @@ python heatmap.py .local-tests/interview.wav --out test-output --model tiny \
 python -m playwright install chromium
 python scripts/verify_report.py test-output/report.html
 
-# Echter Browser-Uploadtest; ausschliesslich eine Ein-Stimmen-Testaufnahme verwenden
-python scripts/verify_upload.py monolog.wav
+# Echter Browser-Uploadtest inklusive automatischer Sprechererkennung
+python scripts/verify_upload.py .local-tests/interview.wav --speakers auto --llm ollama
 ```
 
 Die Testaufnahme ist eine selbst erzeugte fiktive Geschichte. Importierte Sprecherbereiche stammen aus den echten Grenzen der synthetisierten Sprachdateien. Wortzeiten und Text werden tatsächlich mit Whisper berechnet, nicht als Demo erfunden.
@@ -223,12 +219,14 @@ Auf dem Entwicklungsrechner geprüft:
 - 2:50-Minuten-Aufnahme mit `tiny`/CPU/int8: reale lokale Transkription, Wortzeiten, zwei importierte Stimmen, Audio-Merkmale, Report, SRT/JSON/EDL und Clip-Rendering.
 - Dieselbe Aufnahme zusätzlich mit `medium`/CPU/int8: erfolgreiche vollständige Pipeline mit dem CPU-Standardmodell. Ein weiterer echter `tiny`-Lauf bestand mit auf Python-Ebene blockierten TCP-Verbindungen.
 - 60 Minuten wiederholte synthetische Sprache, `tiny`/CPU/int8, lokale Heuristik (`--llm local`), `--offline`: vollständige Pipeline, 7'655 Wörter, 755 Segmente, 64 Peaks, acht Social Clips. Dauer ca. 112 Sekunden, maximaler Resident-Speicher ca. 5.1 GB. Dies ist kein Benchmark für natürliche Interviews oder `medium`/`large-v3`.
+- Automatische tokenfreie Sprechererkennung mit öffentlichen noScribe-/community-1-Gewichten: zwei Stimmen in der 2:50-Minuten-Testaufnahme erkannt. Eine zusätzliche lokale Inferenz mit blockierten TCP-Verbindungen prüft, dass keine Netzwerkverbindung für die Erkennung benötigt wird.
 - Echte Ollama-Analyse mit installiertem `gpt-oss:20b`: zwei Fenster der 2:50-Minuten-Aufnahme und anschliessende Gesamtdramaturgie, ohne Cloud-Schlüssel; drei Kapitel, fünf Phasen und drei Höhepunkte. Das ist kein Qualitätsbenchmark für natürliche Langinterviews.
 - Browser unter `file://`: korrekter Clip-Start und -Stopp, Suche, gespeicherte Sprechernamen, Downloads, Dark Mode und 768px Breite; keine HTTP-Aufrufe.
 - Browser-Upload mit echter Ein-Stimmen-Aufnahme: alle sieben CLI-Schritte, gerenderte Clips, automatische Weiterleitung, korrekte Wiedergabe und Exporte; beschädigte Aufnahme mit Fehleranzeige. Kein externer HTTP-Aufruf des Browsers. Automatische Server-Tests prüfen zusätzlich Upload-Isolation, Limits, Origin/CSRF/Host-Schutz, Byte-Ranges, Neustart/Wiederaufnahme und das Entfernen von Schlüsseln aus Logs.
+- Zusätzlich vollständiger Browser-Upload der selbst erzeugten Zweistimmen-Aufnahme ohne Zugangsdaten: automatische Erkennung von S1/S2, 29 Segmente, lokale Ollama-Analyse, Report und gerenderte Clips. Der Erstdownload wurde auch separat mit einem leeren Modellverzeichnis geprüft.
 - Automatische Tests für echte Zitatprüfung, Cache-Invalidierung, individuelle Sprecher-Normalisierung, Zeitbudgets, Schnittgrenzen, EDL-Timecodes, HTML-Injection, LLM-Verträge und Remote-Chunk-Offsets.
 
-**Noch extern zu prüfen:** automatische pyannote-Diarisierung mit freigeschaltetem Modell, echte Claude-/OpenAI-API-Aufrufe, NLE-Import und natürliche lange Schweizerdeutsch-Interviews. Hier wurden keine API-Schlüssel bereitgestellt. API-Tests verwenden Stubs und lösen keine kostenpflichtigen Aufrufe aus.
+**Noch extern zu prüfen:** echte Claude-/OpenAI-API-Aufrufe, NLE-Import und natürliche lange Schweizerdeutsch-Interviews. Hier wurden keine API-Schlüssel bereitgestellt. API-Tests verwenden Stubs und lösen keine kostenpflichtigen Aufrufe aus.
 
 ## Datenschutz
 
@@ -236,20 +234,20 @@ Lokale Verarbeitung unterstützt einen datensparsamen Workflow, ist aber keine p
 
 ## Open Source und Modelllizenzen
 
-Der eigene Projektcode steht unter der [MIT-Lizenz](LICENSE). Drittkomponenten und Modellgewichte haben eigene Bedingungen; sie werden nicht als Teil des Projektcodes neu lizenziert. Insbesondere: Ollama und Whisper/faster-whisper sind quelloffene Software, `gpt-oss` hat offene Gewichte unter Apache 2.0, pyannote community-1 nennt CC-BY-4.0 für seine Gewichte und erfordert vor dem Erstdownload die persönliche Modellfreigabe. Andere Ollama-Modelle können andere oder eingeschränktere Bedingungen haben. Siehe [Drittkomponenten](THIRD_PARTY_NOTICES.md).
+Der eigene Projektcode steht unter der [MIT-Lizenz](LICENSE). Drittkomponenten und Modellgewichte haben eigene Bedingungen; sie werden nicht als Teil des Projektcodes neu lizenziert. Insbesondere: Ollama und Whisper/faster-whisper sind quelloffene Software, `gpt-oss` hat offene Gewichte unter Apache 2.0, die lokalen Sprechergewichte werden aus der öffentlichen noScribe-Distribution bezogen; deren Herkunfts- und Attributionshinweise gelten weiterhin. Andere Ollama-Modelle können andere oder eingeschränktere Bedingungen haben. Siehe [Drittkomponenten](THIRD_PARTY_NOTICES.md).
 
-Für spätere Läufe ohne Hugging-Face-Token das freigeschaltete community-1-Modell vollständig lokal herunterladen und in einer eigenen YAML-Konfiguration `transcription.diarization_model` auf dieses Verzeichnis setzen. Der Server erkennt einen lokalen Modellpfad und verlangt dann keinen Token. Der Token betrifft den Modelldownload, keine Audioübermittlung; die Sprechererkennung findet lokal statt.
+`transcription.diarization_model: noscribe` ist der Standard. Die verwendete Revision ist zusätzlich Teil des Transkript-/Diarisierungs-Cache-Schlüssels. Ein selbst verwaltetes lokales Modellverzeichnis kann weiterhin über `--diarization-model /pfad/zum/modell` ausgewählt werden. Die alte direkte Hub-Anbindung ist kein Bestandteil des Upload-Workflows mehr.
 
 ## Struktur
 
 ```text
 heatmap.py
 server.py  # lokale Upload-App
-pipeline/{audio,transcribe,analyze,ollama,scoring,cuts,report,common}.py
+pipeline/{audio,transcribe,models,analyze,ollama,scoring,cuts,report,common}.py
 templates/{upload,report}.html
 config.yaml
 scripts/{make_test_audio,verify_report,verify_upload}.py
 tests/
 ```
 
-Referenzen: [Ollama Structured Outputs](https://docs.ollama.com/capabilities/structured-outputs), [gpt-oss](https://openai.com/open-models/), [faster-whisper](https://github.com/SYSTRAN/faster-whisper), [community-1](https://huggingface.co/pyannote/speaker-diarization-community-1), [Claude Structured Outputs](https://platform.claude.com/docs/en/build-with-claude/structured-outputs), [OpenAI Speech to Text](https://developers.openai.com/api/docs/guides/speech-to-text).
+Referenzen: [noScribe-Modelldistribution](https://github.com/kaixxx/noScribe/tree/main/pyannote), [Ollama Structured Outputs](https://docs.ollama.com/capabilities/structured-outputs), [gpt-oss](https://openai.com/open-models/), [faster-whisper](https://github.com/SYSTRAN/faster-whisper), [community-1](https://huggingface.co/pyannote/speaker-diarization-community-1), [Claude Structured Outputs](https://platform.claude.com/docs/en/build-with-claude/structured-outputs), [OpenAI Speech to Text](https://developers.openai.com/api/docs/guides/speech-to-text).

@@ -113,7 +113,9 @@ def remote_transcribe(wav: Path, language: str):
     return {"words": result, "language": language, "model": "whisper-1", "backend": "openai-remote"}
 
 
-def diarize(wav: Path, model_name: str, speakers: int | None = None, turns_file: Path | None = None):
+def diarize(
+    wav: Path, model_name: str, speakers: int | None = None, turns_file: Path | None = None, offline=False
+):
     os.environ["PYANNOTE_METRICS_ENABLED"] = "0"
     os.environ["HF_HUB_DISABLE_TELEMETRY"] = "1"
     if turns_file:
@@ -121,6 +123,11 @@ def diarize(wav: Path, model_name: str, speakers: int | None = None, turns_file:
         if not isinstance(turns, list):
             raise ValueError("Sprecherdatei muss eine Liste aus {start, end, speaker} sein.")
     else:
+        noscribe = model_name == "noscribe"
+        if noscribe:
+            from .models import ensure_models
+
+            model_name = str(ensure_models(offline=offline))
         if model_name != "pyannote/speaker-diarization-community-1" and not Path(model_name).is_dir():
             raise ValueError(
                 "Diarisierung erlaubt nur community-1 oder ein lokales Modellverzeichnis; "
@@ -133,23 +140,25 @@ def diarize(wav: Path, model_name: str, speakers: int | None = None, turns_file:
             from pyannote.audio.pipelines import SpeakerDiarization
         except ImportError as exc:
             raise RuntimeError(
-                "Diarisierung benötigt pip install '.[diarization]' und HF_TOKEN. "
-                "Für genau eine Stimme: --single-speaker."
+                "Diarisierung benötigt pip install '.[diarization]'. Für genau eine Stimme: --single-speaker."
             ) from exc
         log.info("Lokale Diarisierung mit %s", model_name)
         try:
-            pipeline = Pipeline.from_pretrained(model_name, token=os.environ.get("HF_TOKEN"))
+            pipeline = Pipeline.from_pretrained(
+                model_name, token=False if noscribe else os.environ.get("HF_TOKEN")
+            )
         except Exception as exc:
             raise RuntimeError(
-                "Lokales pyannote-Modell nicht ladbar. HF_TOKEN, akzeptierte Modellbedingungen "
-                "und bei --offline die lokalen Modellgewichte prüfen."
+                "Lokales Sprecher-Modell nicht ladbar. Modell-Dateien und pyannote-Version prüfen."
             ) from exc
         if pipeline is None:
-            raise RuntimeError("pyannote-Modell fehlt. HF_TOKEN und Modellfreigabe prüfen.")
+            raise RuntimeError("Lokales Sprecher-Modell fehlt oder ist unvollständig.")
         if not isinstance(pipeline, SpeakerDiarization):
             raise ValueError("Nur lokale SpeakerDiarization-Pipelines sind erlaubt.")
         if torch.cuda.is_available():
             pipeline.to(torch.device("cuda"))
+        else:
+            torch.set_num_threads(min(8, os.cpu_count() or 4))
         # Übergabe als Tensor vermeidet zusätzliche Decoder-Abhängigkeiten.
         audio, sr = sf.read(wav, dtype="float32")
         kwargs = {"num_speakers": speakers} if speakers else {}

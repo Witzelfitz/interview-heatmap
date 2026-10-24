@@ -678,17 +678,6 @@ details .field {
        <p class="hint" id="llm-help">
         Ollama erstellt Zusammenfassung, Kapitel, Dramaturgie und Schnittvorschläge direkt auf deinem Laptop. Keine API-Schlüssel und keine Übermittlung von Audio oder Transkript an Dritte. Die Heuristik ist ein einfacherer Modus ohne LLM; Claude ist optional und sendet Text an Anthropic.
        </p>
-       <label class="field" id="hf-field">
-        Hugging-Face-Token für lokale Sprechererkennung
-        <input autocomplete="off" id="hf-token" placeholder="hf_…" spellcheck="false" type="password"/>
-       </label>
-       <p class="hint" id="hf-help">
-        Einmal die
-        <a href="https://huggingface.co/pyannote/speaker-diarization-community-1" rel="noreferrer" target="_blank">
-         community-1-Modellbedingungen
-        </a>
-        selbst akzeptieren und einen Token mit Leserechten verwenden. Die Erkennung läuft lokal; beim ersten Mal werden Modellgewichte heruntergeladen.
-       </p>
        <label class="field hidden" id="anthropic-field">
         Anthropic-API-Schlüssel
         <input autocomplete="off" id="anthropic-key" placeholder="sk-ant-…" spellcheck="false" type="password"/>
@@ -863,18 +852,18 @@ for (const event of ['dragleave', 'drop']) $('drop').addEventListener(event, e =
 
 function settings() {
   const automatic = $('speaker-mode').value === 'auto';
-  $('hf-field').classList.toggle('hidden', !automatic);
-  $('hf-help').classList.toggle('hidden', !automatic);
+
+
   $('ollama-field').classList.toggle('hidden', $('llm').value !== 'ollama');
   $('anthropic-field').classList.toggle('hidden', $('llm').value !== 'claude');
   $('openai-field').classList.toggle('hidden', !$('remote').checked);
   if (!capabilities) return;
-  const missing = automatic && !capabilities.hf_token && !capabilities.local_diarization_model && !$('hf-token').value.trim();
-  $('setup-note').classList.toggle('hidden', !missing);
-  $('setup-note').textContent = 'Für automatische Sprechererkennung fehlt noch ein freigeschalteter Hugging-Face-Token. Gib ihn unter «Analyse-Einstellungen & Zugangsdaten» ein. «Genau eine Stimme» nur für Aufnahmen mit tatsächlich einer Stimme verwenden.';
-  if (missing) $('settings').open = true
+  const downloading = automatic && !capabilities.diarization_models_ready;
+  $('setup-note').classList.toggle('hidden', !downloading);
+  $('setup-note').textContent = 'Die Sprecher-Modelle werden beim ersten Start automatisch geladen (ca. 33 MB). Kein Konto und kein Token nötig. Danach läuft die Erkennung lokal.';
+
 }
-for (const id of ['speaker-mode', 'llm', 'remote', 'hf-token']) $(id).addEventListener('input', () => {
+for (const id of ['speaker-mode', 'llm', 'remote']) $(id).addEventListener('input', () => {
   error('');
   settings()
 });
@@ -894,7 +883,6 @@ function options() {
 function headers() {
   return {
     'X-CSRF-Token': capabilities.csrf,
-    'X-HF-Token': $('hf-token').value.trim(),
     'X-Anthropic-Key': $('anthropic-key').value.trim(),
     'X-OpenAI-Key': $('openai-key').value.trim()
   }
@@ -905,7 +893,7 @@ function validate() {
   if (!capabilities.ffmpeg) throw Error('ffmpeg/ffprobe fehlt auf diesem Gerät.');
   if ($('speaker-mode').value === 'auto') {
     if (!capabilities.diarization) throw Error('Die lokale Sprechererkennung ist noch nicht installiert. Siehe README: pip install -e ".[diarization]".');
-    if (!capabilities.hf_token && !capabilities.local_diarization_model && !$('hf-token').value.trim()) throw Error('Bitte zuerst einen freigeschalteten Hugging-Face-Token eingeben.')
+    if (!capabilities.local_diarization_model) throw Error('Bitte in config.yaml die Sprechererkennung auf noscribe stellen.');
   }
   if ($('llm').value === 'ollama' && (!capabilities.ollama || !$('ollama-model').value)) throw Error('Bitte Ollama starten und ein Chat-Modell lokal installieren. Danach die Seite neu laden.');
   if ($('llm').value === 'claude' && (!capabilities.claude || !capabilities.anthropic_key && !$('anthropic-key').value.trim())) throw Error('Claude benötigt das installierte Claude-Paket und einen Anthropic-API-Schlüssel.');

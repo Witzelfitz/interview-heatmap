@@ -49,16 +49,16 @@ def post_path(filename="aufnahme.wav", **options):
 def test_upload_is_isolated_streamed_and_secrets_are_not_persisted(app):
     jobs, _, request, queued = app
     status, _, data = request(
-        "POST", post_path("../../aufnahme.wav"), b"RIFF-test", {"X-HF-Token": "hf_test-secret"}
+        "POST", post_path("../../aufnahme.wav"), b"RIFF-test", {"X-OpenAI-Key": "sk_test-secret"}
     )
     assert status == 202
     record = json.loads(data)
     assert record["filename"] == "aufnahme.wav" and record["upload_complete"]
     folder = jobs.directory / record["id"]
     assert (folder / "input" / "aufnahme.wav").read_bytes() == b"RIFF-test"
-    assert queued == [(record["id"], {"HF_TOKEN": "hf_test-secret"})]
-    assert "hf_test-secret" not in (folder / "job.json").read_text()
-    assert "hf_test-secret" not in request("GET", "/api/jobs")[2].decode()
+    assert queued == [(record["id"], {"OPENAI_API_KEY": "sk_test-secret"})]
+    assert "sk_test-secret" not in (folder / "job.json").read_text()
+    assert "sk_test-secret" not in request("GET", "/api/jobs")[2].decode()
 
 
 @pytest.mark.parametrize(
@@ -78,16 +78,35 @@ def test_large_and_unsupported_uploads_are_rejected(app):
     assert not queued and not jobs.records
 
 
-def test_automatic_diarization_requires_configuration_before_upload(app, monkeypatch):
+def test_automatic_diarization_requires_local_backend_before_upload(app, monkeypatch):
     jobs, _, request, _ = app
     monkeypatch.setattr(
         jobs,
         "capabilities",
-        lambda: {"ffmpeg": True, "diarization": True, "hf_token": False, "local_diarization_model": False},
+        lambda: {"ffmpeg": True, "diarization": True, "local_diarization_model": False},
     )
     status, _, data = request("POST", post_path(speaker_mode="auto"), b"private")
-    assert status == 400 and "Hugging-Face" in json.loads(data)["error"]
+    assert status == 400 and "noscribe" in json.loads(data)["error"]
     assert not jobs.records
+
+
+def test_automatic_diarization_starts_without_account_even_before_download(app, monkeypatch):
+    jobs, _, request, queued = app
+    monkeypatch.setattr(
+        jobs,
+        "capabilities",
+        lambda: {
+            "ffmpeg": True,
+            "diarization": True,
+            "local_diarization_model": True,
+            "diarization_models_ready": False,
+            "diarization_backend": "noscribe",
+        },
+    )
+    status, _, data = request("POST", post_path(speaker_mode="auto"), b"private")
+    assert status == 202 and len(queued) == 1
+    assert queued[0][1] == {}  # Kein HF-Token als implizite Voraussetzung.
+    assert json.loads(data)["options"]["speaker_mode"] == "auto"
 
 
 def test_report_access_blocks_private_files_and_supports_media_ranges(app):

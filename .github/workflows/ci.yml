@@ -18,3 +18,26 @@ jobs:
       - run: python -m pip install -e '.[dev]'
       - run: ruff check . && ruff format --check .
       - run: pytest -q
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install build PyYAML jsonschema
+      - run: python -m build
+      - run: python -m pip install --no-deps dist/*.whl
+      - name: Check installed package outside the checkout
+        working-directory: ${{ runner.temp }}
+        run: |
+          interview-heatmap --help
+          interview-heatmap-server --help
+          python - <<'PY'
+          from heatmap import ROOT, load_config
+          assert (ROOT / "templates/report.html").is_file()
+          assert (ROOT / "templates/upload.html").is_file()
+          assert (ROOT / "docs/vorstellung.html").is_file()
+          assert (ROOT / "docs/vorstellung.pdf").is_file()
+          load_config(ROOT / "config.yaml")
+          PY

@@ -1,0 +1,5 @@
+include LICENSE THIRD_PARTY_NOTICES.md README.md CONTRIBUTING.md config.yaml .env.example
+recursive-include templates *.html
+recursive-include docs *.md *.html *.pdf *.png *.json
+recursive-include scripts *.py
+recursive-include tests *.py

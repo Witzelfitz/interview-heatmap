@@ -6,6 +6,9 @@ build-backend = "setuptools.build_meta"
 name = "interview-heatmap"
 version = "0.1.0"
 license = "MIT"
+license-files = ["LICENSE", "THIRD_PARTY_NOTICES.md"]
+readme = "README.md"
+authors = [{name = "Benjamin Hanimann"}]
 description = "Lokale Interview-Heatmap und Schnitt-Advisor"
 requires-python = ">=3.11"
 dependencies = [
@@ -13,6 +16,11 @@ dependencies = [
   "soundfile>=0.12,<1", "librosa>=0.10.2,<1", "PyYAML>=6,<7",
   "psutil>=5.9,<8", "jsonschema>=4.23,<5", "av>=11,<18",
 ]
+
+[project.urls]
+Repository = "https://github.com/Witzelfitz/interview-heatmap"
+Issues = "https://github.com/Witzelfitz/interview-heatmap/issues"
+Documentation = "https://github.com/Witzelfitz/interview-heatmap/blob/main/docs/technical-guide.md"
 
 [project.scripts]
 interview-heatmap = "heatmap:main"
